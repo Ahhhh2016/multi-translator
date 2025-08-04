@@ -19,9 +19,16 @@
         .translation-window:hover {
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
         }
+        /* NEW: default border & transition for textarea */
+        .input-box {
+            border: 1px solid #E0E0E0;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        /* UPDATED: focus style – darker border and subtle ring */
         .input-box:focus {
             outline: none;
-            border-bottom: 1px solid #000000;
+            border-color: #333333;
+            box-shadow: 0 0 0 2px rgba(51, 51, 51, 0.1);
         }
         .btn {
             transition: all 0.15s ease;
@@ -105,8 +112,9 @@
     </div>
 
     <footer class="bg-white py-4 text-center text-sm text-[#666666] border-t border-[#E0E0E0]">
-        <p>created by <a href="https://space.coze.cn" class="text-[#333333] hover:underline">coze space</a></p>
-        <p>页面内容均由 AI 生成，仅供参考</p>
+        <p>本项目由 <a href="https://github.com/Ahhhh2016" class="text-[#333333] hover:underline">Ahhhh2016</a> 制作</p>
+        <p>本页面使用开源翻译 API（LibreTranslate），请注意信息安全</p>
+        <p>访问量：<span id="visit-counter">-</span></p>
     </footer>
 
     <script>
@@ -288,6 +296,18 @@
                     hideModal();
                 }
             });
+
+            // 访客计数器 - 使用 countapi.xyz
+            fetch('https://api.countapi.xyz/update/multitranslator/pageviews/?amount=1')
+                .then(res => res.json())
+                .then(data => {
+                    const counterEl = document.getElementById('visit-counter');
+                    if (counterEl) counterEl.textContent = data.value;
+                })
+                .catch(() => {
+                    const counterEl = document.getElementById('visit-counter');
+                    if (counterEl) counterEl.textContent = 'N/A';
+                });
         });
     </script>
 </body>
