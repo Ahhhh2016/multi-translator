@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多语言翻译器</title>
+    <script src="https://cdn.tailwindcss.com/3.3.3"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #F9F9F9;
+            color: #333333;
+        }
+        .translation-window {
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .translation-window:hover {
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+        .input-box:focus {
+            outline: none;
+            border-bottom: 1px solid #0066CC;
+        }
+        .btn {
+            transition: all 0.15s ease;
+        }
+        .btn:hover {
+            background-color: #000000;
+        }
+        .fade-in {
+            animation: fadeIn 0.2s ease-in;
+        }
+        .fade-out {
+            animation: fadeOut 0.2s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        .language-selector {
+            transition: all 0.15s ease;
+        }
+        .language-selector:hover {
+            background-color: #F0F0F0;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white py-6 px-6 shadow-sm">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-medium">多语言翻译器</h1>
+            <button id="add-window-btn" class="btn bg-[#333333] text-white px-4 py-2 rounded-sm text-sm">
+                + 添加
+            </button>
+        </div>
+    </header>
+
+    <!-- 主翻译区域 -->
+    <main class="container mx-auto py-8 px-6">
+        <div id="translation-container" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- 默认翻译窗口将通过JS动态生成 -->
+        </div>
+    </main>
+
+    <!-- 语言选择模态框 -->
+    <div id="language-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-sm p-6 w-full max-w-md">
+            <h3 class="text-lg font-medium mb-4">添加翻译窗口</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm text-[#666666] mb-1">源语言</label>
+                    <select id="source-language" class="w-full border border-[#E0E0E0] rounded-sm px-3 py-2 focus:outline-none focus:border-[#0066CC]">
+                        <option value="zh">中文</option>
+                        <option value="en">英文</option>
+                        <option value="ja">日文</option>
+                        <option value="ko">韩文</option>
+                        <option value="fr">法文</option>
+                        <option value="de">德文</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-[#666666] mb-1">目标语言</label>
+                    <select id="target-language" class="w-full border border-[#E0E0E0] rounded-sm px-3 py-2 focus:outline-none focus:border-[#0066CC]">
+                        <option value="en">英文</option>
+                        <option value="zh">中文</option>
+                        <option value="ja">日文</option>
+                        <option value="ko">韩文</option>
+                        <option value="fr">法文</option>
+                        <option value="de">德文</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button id="cancel-modal-btn" class="px-4 py-2 border border-[#E0E0E0] rounded-sm text-[#333333] hover:bg-[#F5F5F5]">取消</button>
+                <button id="confirm-add-btn" class="btn bg-[#333333] text-white px-4 py-2 rounded-sm">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-white py-4 text-center text-sm text-[#666666] border-t border-[#E0E0E0]">
+        <p>created by <a href="https://space.coze.cn" class="text-[#0066CC] hover:underline">coze space</a></p>
+        <p>页面内容均由 AI 生成，仅供参考</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 默认翻译窗口配置
+            const defaultTranslations = [
+                { source: 'zh', target: 'en', sourceName: '中文', targetName: '英文' },
+                { source: 'en', target: 'zh', sourceName: '英文', targetName: '中文' }
+            ];
+
+            const translationContainer = document.getElementById('translation-container');
+            const addWindowBtn = document.getElementById('add-window-btn');
+            const languageModal = document.getElementById('language-modal');
+            const cancelModalBtn = document.getElementById('cancel-modal-btn');
+            const confirmAddBtn = document.getElementById('confirm-add-btn');
+            const sourceLanguageSelect = document.getElementById('source-language');
+            const targetLanguageSelect = document.getElementById('target-language');
+
+            // 1. 异步翻译函数 —— 以 LibreTranslate 为例
+            async function translateText(text, sourceLang, targetLang) {
+                if (!text.trim()) return '';
+
+                try {
+                    // 可用的 LibreTranslate 公共实例（按优先级从高到低）
+                    const endpoints = [
+                        'https://translate.terraprint.co/translate',   // ✅ 免 API Key、支持 CORS
+                        'https://translate.fedilab.app/translate',     // ✅ 免 Key
+                    ];
+
+                    // 依次尝试，直到有实例返回成功
+                    let resp;
+                    for (const API of endpoints) {
+                        try {
+                            resp = await fetch(API, {
+                                method: 'POST',
+                                mode: 'cors',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    q: text,
+                                    source: sourceLang,
+                                    target: targetLang,
+                                    format: 'text'
+                                })
+                            });
+                            if (resp.ok) break;   // 成功就跳出循环
+                        } catch (_) {
+                            // 忽略当前实例的网络错误，尝试下一个
+                        }
+                    }
+
+                    if (!resp || !resp.ok) throw new Error('all endpoints failed');
+                    const data = await resp.json();
+                    return data.translatedText;          // LibreTranslate 的返回字段
+                } catch (err) {
+                    console.error('translate error:', err);
+                    return '翻译失败，请稍后重试';
+                }
+            }
+
+            // 创建翻译窗口
+            function createTranslationWindow(source, target, sourceName, targetName) {
+                const windowId = `window-${Date.now()}`;
+                const card = document.createElement('div');
+                card.className = 'translation-window bg-white rounded-sm border border-[#E0E0E0] overflow-hidden fade-in';
+                card.id = windowId;
+                
+                card.innerHTML = `
+                    <div class="bg-[#F5F5F5] py-2 px-4 flex justify-between items-center h-10">
+                        <div class="text-sm text-[#333333]">
+                            ${sourceName} → ${targetName}
+                        </div>
+                        <button class="delete-btn text-[#666666] hover:text-[#333333]">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2">
+                        <div class="p-4 border-r border-[#E0E0E0]">
+                            <textarea class="input-box w-full h-40 p-3 bg-white resize-none" 
+                                      placeholder="输入${sourceName}文本..." 
+                                      data-source="${source}"></textarea>
+                        </div>
+                        <div class="p-4">
+                            <div class="w-full h-40 p-3 bg-[#F9F9F9] overflow-auto" data-target="${target}"></div>
+                        </div>
+                    </div>
+                    <div class="px-4 py-3 border-t border-[#E0E0E0] flex justify-end">
+                        <button class="btn bg-[#333333] text-white px-4 py-1 rounded-sm text-sm translate-btn">
+                            翻译
+                        </button>
+                    </div>
+                `;
+                
+                // 添加到容器
+                translationContainer.appendChild(card);
+                
+                // 绑定事件
+                const textarea = card.querySelector('textarea');
+                const resultDiv = card.querySelector('div[data-target]');
+                const deleteBtn = card.querySelector('.delete-btn');
+                const translateBtn = card.querySelector('.translate-btn');
+                
+                let timeoutId;
+                
+                // 自动翻译
+                textarea.addEventListener('input', async () => {
+                    clearTimeout(timeoutId);
+                    timeoutId = setTimeout(async () => {
+                        const text = textarea.value;
+                        resultDiv.textContent = '翻译中…';
+                        resultDiv.textContent = await translateText(text, source, target);
+                    }, 500);
+                });
+                
+                // 手动翻译
+                translateBtn.addEventListener('click', async () => {
+                    const text = textarea.value;
+                    resultDiv.textContent = '翻译中…';
+                    resultDiv.textContent = await translateText(text, source, target);
+                });
+                
+                // 删除窗口
+                deleteBtn.addEventListener('click', function() {
+                    card.classList.add('fade-out');
+                    setTimeout(() => {
+                        card.remove();
+                    }, 200);
+                });
+            }
+
+            // 初始化默认翻译窗口
+            defaultTranslations.forEach(t => {
+                createTranslationWindow(t.source, t.target, t.sourceName, t.targetName);
+            });
+
+            // 显示语言选择模态框
+            addWindowBtn.addEventListener('click', function() {
+                languageModal.classList.remove('hidden');
+            });
+
+            // 隐藏语言选择模态框
+            function hideModal() {
+                languageModal.classList.add('hidden');
+            }
+
+            cancelModalBtn.addEventListener('click', hideModal);
+
+            // 确认添加新翻译窗口
+            confirmAddBtn.addEventListener('click', function() {
+                const sourceLang = sourceLanguageSelect.value;
+                const targetLang = targetLanguageSelect.value;
+                
+                if (sourceLang === targetLang) {
+                    alert('源语言和目标语言不能相同');
+                    return;
+                }
+                
+                const languageNames = {
+                    'zh': '中文',
+                    'en': '英文',
+                    'ja': '日文',
+                    'ko': '韩文',
+                    'fr': '法文',
+                    'de': '德文'
+                };
+                
+                createTranslationWindow(
+                    sourceLang, 
+                    targetLang, 
+                    languageNames[sourceLang], 
+                    languageNames[targetLang]
+                );
+                
+                hideModal();
+            });
+
+            // 点击模态框外部关闭
+            languageModal.addEventListener('click', function(e) {
+                if (e.target === languageModal) {
+                    hideModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
