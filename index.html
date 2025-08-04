@@ -237,13 +237,13 @@
                                       data-source="${source}"></textarea>
                         </div>
                         <div class="p-4">
-                            <div class="w-full h-40 p-3 bg-[#F9F9F9] overflow-auto rounded-lg" data-target="${target}"></div>
+                            <div class="relative w-full h-40">
+                                <div class="w-full h-full p-3 bg-[#F9F9F9] overflow-auto rounded-lg pr-10" data-target="${target}"></div>
+                                <button class="copy-btn absolute bottom-3 right-3 text-[#666666] hover:text-[#333333]" title="复制">
+                                    <i class="fa-regular fa-copy"></i>
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                    <div class="px-4 py-3 border-t border-[#E0E0E0] flex justify-end">
-                        <button class="btn bg-[#333333] text-white px-4 py-1 rounded-lg text-sm translate-btn">
-                            翻译
-                        </button>
                     </div>
                 `;
                 
@@ -256,7 +256,7 @@
                 const textarea = card.querySelector('textarea');
                 const resultDiv = card.querySelector('div[data-target]');
                 const deleteBtn = card.querySelector('.delete-btn');
-                const translateBtn = card.querySelector('.translate-btn');
+                const copyBtn = card.querySelector('.copy-btn');
                 
                 let timeoutId;
                 
@@ -270,11 +270,31 @@
                     }, 500);
                 });
                 
-                // 手动翻译
-                translateBtn.addEventListener('click', async () => {
-                    const text = textarea.value;
-                    resultDiv.textContent = '翻译中…';
-                    resultDiv.textContent = await translateText(text, source, target);
+                // 手动翻译按钮已移除
+                
+                // 复制翻译结果
+                copyBtn.addEventListener('click', async () => {
+                    const text = resultDiv.textContent.trim();
+                    if (!text) return;
+                    const icon = copyBtn.querySelector('i');
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        icon.classList.replace('fa-copy', 'fa-check');
+                        // 使用 solid 样式的对勾提升可见度
+                        icon.classList.replace('fa-regular', 'fa-solid');
+                        setTimeout(() => {
+                            icon.classList.replace('fa-check', 'fa-copy');
+                            icon.classList.replace('fa-solid', 'fa-regular');
+                        }, 1500);
+                    } catch (err) {
+                        console.error('copy error:', err);
+                        icon.classList.replace('fa-copy', 'fa-xmark');
+                        icon.classList.replace('fa-regular', 'fa-solid');
+                        setTimeout(() => {
+                            icon.classList.replace('fa-xmark', 'fa-copy');
+                            icon.classList.replace('fa-solid', 'fa-regular');
+                        }, 1500);
+                    }
                 });
                 
                 // 删除窗口
