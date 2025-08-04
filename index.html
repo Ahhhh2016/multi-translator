@@ -21,7 +21,7 @@
         }
         .input-box:focus {
             outline: none;
-            border-bottom: 1px solid #0066CC;
+            border-bottom: 1px solid #000000;
         }
         .btn {
             transition: all 0.15s ease;
@@ -56,7 +56,7 @@
     <header class="bg-white py-6 px-6 shadow-sm">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-medium">多语言翻译器</h1>
-            <button id="add-window-btn" class="btn bg-[#333333] text-white px-4 py-2 rounded-sm text-sm">
+            <button id="add-window-btn" class="btn bg-[#333333] text-white px-4 py-2 rounded-lg text-sm">
                 + 添加
             </button>
         </div>
@@ -71,12 +71,12 @@
 
     <!-- 语言选择模态框 -->
     <div id="language-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-sm p-6 w-full max-w-md">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
             <h3 class="text-lg font-medium mb-4">添加翻译窗口</h3>
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm text-[#666666] mb-1">源语言</label>
-                    <select id="source-language" class="w-full border border-[#E0E0E0] rounded-sm px-3 py-2 focus:outline-none focus:border-[#0066CC]">
+                    <select id="source-language" class="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#333333]">
                         <option value="zh">中文</option>
                         <option value="en">英文</option>
                         <option value="ja">日文</option>
@@ -87,7 +87,7 @@
                 </div>
                 <div>
                     <label class="block text-sm text-[#666666] mb-1">目标语言</label>
-                    <select id="target-language" class="w-full border border-[#E0E0E0] rounded-sm px-3 py-2 focus:outline-none focus:border-[#0066CC]">
+                    <select id="target-language" class="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#333333]">
                         <option value="en">英文</option>
                         <option value="zh">中文</option>
                         <option value="ja">日文</option>
@@ -98,14 +98,14 @@
                 </div>
             </div>
             <div class="mt-6 flex justify-end space-x-3">
-                <button id="cancel-modal-btn" class="px-4 py-2 border border-[#E0E0E0] rounded-sm text-[#333333] hover:bg-[#F5F5F5]">取消</button>
-                <button id="confirm-add-btn" class="btn bg-[#333333] text-white px-4 py-2 rounded-sm">确认</button>
+                <button id="cancel-modal-btn" class="px-4 py-2 border border-[#E0E0E0] rounded-lg text-[#333333] hover:bg-[#F5F5F5]">取消</button>
+                <button id="confirm-add-btn" class="btn bg-[#333333] text-white px-4 py-2 rounded-lg">确认</button>
             </div>
         </div>
     </div>
 
     <footer class="bg-white py-4 text-center text-sm text-[#666666] border-t border-[#E0E0E0]">
-        <p>created by <a href="https://space.coze.cn" class="text-[#0066CC] hover:underline">coze space</a></p>
+        <p>created by <a href="https://space.coze.cn" class="text-[#333333] hover:underline">coze space</a></p>
         <p>页面内容均由 AI 生成，仅供参考</p>
     </footer>
 
@@ -170,7 +170,7 @@
             function createTranslationWindow(source, target, sourceName, targetName) {
                 const windowId = `window-${Date.now()}`;
                 const card = document.createElement('div');
-                card.className = 'translation-window bg-white rounded-sm border border-[#E0E0E0] overflow-hidden fade-in';
+                card.className = 'translation-window bg-white rounded-lg border border-[#E0E0E0] overflow-hidden fade-in';
                 card.id = windowId;
                 
                 card.innerHTML = `
@@ -184,16 +184,16 @@
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2">
                         <div class="p-4 border-r border-[#E0E0E0]">
-                            <textarea class="input-box w-full h-40 p-3 bg-white resize-none" 
+                            <textarea class="input-box w-full h-40 p-3 bg-white resize-none rounded-lg" 
                                       placeholder="输入${sourceName}文本..." 
                                       data-source="${source}"></textarea>
                         </div>
                         <div class="p-4">
-                            <div class="w-full h-40 p-3 bg-[#F9F9F9] overflow-auto" data-target="${target}"></div>
+                            <div class="w-full h-40 p-3 bg-[#F9F9F9] overflow-auto rounded-lg" data-target="${target}"></div>
                         </div>
                     </div>
                     <div class="px-4 py-3 border-t border-[#E0E0E0] flex justify-end">
-                        <button class="btn bg-[#333333] text-white px-4 py-1 rounded-sm text-sm translate-btn">
+                        <button class="btn bg-[#333333] text-white px-4 py-1 rounded-lg text-sm translate-btn">
                             翻译
                         </button>
                     </div>
