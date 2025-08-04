@@ -1,5 +1,8 @@
 # MultiTranslator / 多语言网页翻译工具
 
+## 访问网址
+[https://ahhhh2016.github.io/multitranslator/](ahhhh2016.github.io/multitranslator/)
+
 ## 简介
 MultiTranslator 是一个开源、零依赖的极简网页翻译工具，基于 LibreTranslate API 实现多语言互译。整个页面由单个 `index.html` 组成，无需后端部署；将文件放到任意静态服务器或直接双击即可使用。页面内置 Busuanzi 访问量统计。
 
@@ -19,6 +22,9 @@ MultiTranslator 是一个开源、零依赖的极简网页翻译工具，基于 
 
 ## Introduction
 MultiTranslator is an open-source, zero-dependency web translator powered by the LibreTranslate API. The entire app lives in a single `index.html` file—no backend required. Busuanzi is integrated to display page views.
+
+### Visit the website
+[https://ahhhh2016.github.io/multitranslator/](ahhhh2016.github.io/multitranslator/)
 
 ### Features
 - Translate between 6 languages (via LibreTranslate)
