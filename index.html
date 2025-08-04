@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>多语言翻译器</title>
+    <title>Multi Translator</title>
+    <!-- Google Font for nicer heading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com/3.3.3"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <style>
@@ -56,13 +60,19 @@
         .language-selector:hover {
             background-color: #F0F0F0;
         }
+        .logo {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
     </style>
 </head>
 <body class="min-h-screen">
     <!-- 顶部导航栏 -->
     <header class="bg-white py-6 px-6 shadow-sm">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-medium">多语言翻译器</h1>
+            <h1 class="logo text-xl font-semibold flex items-center space-x-2">
+                <i class="fa-solid fa-language"></i>
+                <span>Multi Translator</span>
+            </h1>
             <button id="add-window-btn" class="btn bg-[#333333] text-white px-4 py-2 rounded-lg text-sm">
                 + 添加
             </button>
@@ -114,7 +124,7 @@
     <footer class="bg-white py-4 text-center text-sm text-[#666666] border-t border-[#E0E0E0]">
         <p>本项目由 <a href="https://github.com/Ahhhh2016" class="text-[#333333] hover:underline">Ahhhh2016</a> 制作</p>
         <p>本页面使用开源翻译 API（LibreTranslate），请注意信息安全</p>
-        <p>访问量：<span id="visit-counter">-</span></p>
+        <p id="busuanzi_container_site_pv">访问量：<span id="busuanzi_value_site_pv">-</span></p>
     </footer>
 
     <script>
@@ -124,6 +134,23 @@
                 { source: 'zh', target: 'en', sourceName: '中文', targetName: '英文' },
                 { source: 'en', target: 'zh', sourceName: '英文', targetName: '中文' }
             ];
+
+            // 读取本地保存的翻译窗口，如果没有则使用默认配置
+            const savedTranslations = JSON.parse(localStorage.getItem('translationWindows') || 'null');
+            const initialTranslations = Array.isArray(savedTranslations) && savedTranslations.length
+                ? savedTranslations
+                : defaultTranslations;
+
+            // 将当前窗口配置保存到 localStorage
+            function saveCurrentWindows() {
+                const configs = Array.from(document.querySelectorAll('.translation-window')).map(card => ({
+                    source: card.dataset.source,
+                    target: card.dataset.target,
+                    sourceName: card.dataset.sourceName,
+                    targetName: card.dataset.targetName,
+                }));
+                localStorage.setItem('translationWindows', JSON.stringify(configs));
+            }
 
             const translationContainer = document.getElementById('translation-container');
             const addWindowBtn = document.getElementById('add-window-btn');
@@ -180,6 +207,11 @@
                 const card = document.createElement('div');
                 card.className = 'translation-window bg-white rounded-lg border border-[#E0E0E0] overflow-hidden fade-in';
                 card.id = windowId;
+                // 元数据用于持久化
+                card.dataset.source = source;
+                card.dataset.target = target;
+                card.dataset.sourceName = sourceName;
+                card.dataset.targetName = targetName;
                 
                 card.innerHTML = `
                     <div class="bg-[#F5F5F5] py-2 px-4 flex justify-between items-center h-10">
@@ -209,6 +241,8 @@
                 
                 // 添加到容器
                 translationContainer.appendChild(card);
+                // 保存当前状态
+                saveCurrentWindows();
                 
                 // 绑定事件
                 const textarea = card.querySelector('textarea');
@@ -240,12 +274,13 @@
                     card.classList.add('fade-out');
                     setTimeout(() => {
                         card.remove();
+                        saveCurrentWindows();
                     }, 200);
                 });
             }
 
-            // 初始化默认翻译窗口
-            defaultTranslations.forEach(t => {
+            // 初始化翻译窗口（优先使用本地保存）
+            initialTranslations.forEach(t => {
                 createTranslationWindow(t.source, t.target, t.sourceName, t.targetName);
             });
 
@@ -297,18 +332,10 @@
                 }
             });
 
-            // 访客计数器 - 使用 countapi.xyz
-            fetch('https://api.countapi.xyz/update/multitranslator/pageviews/?amount=1')
-                .then(res => res.json())
-                .then(data => {
-                    const counterEl = document.getElementById('visit-counter');
-                    if (counterEl) counterEl.textContent = data.value;
-                })
-                .catch(() => {
-                    const counterEl = document.getElementById('visit-counter');
-                    if (counterEl) counterEl.textContent = 'N/A';
-                });
+            // 访客计数器 - 由 Busuanzi 提供，无需额外请求
         });
     </script>
+    <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
 </body>
 </html>
