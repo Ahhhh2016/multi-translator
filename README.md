@@ -1,6 +1,6 @@
 # MultiTranslator / 多语言网页翻译工具
 
-<img width="3002" height="1444" alt="image" src="https://github.com/user-attachments/assets/c77c0059-d81f-4fb4-aa6e-5fac25007e9f" />
+<img width="1133" height="586" alt="image" src="https://github.com/user-attachments/assets/67aa863c-1236-4c9f-ba58-1285e9fb6c5b" />
 
 
 👉 [点击访问 MultiTranslator 网页应用](https://ahhhh2016.github.io/multi-translator/)
