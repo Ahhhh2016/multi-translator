@@ -17,6 +17,18 @@ MultiTranslator 是一个开源、零依赖的极简网页翻译工具，基于 
 
 > 如遇 LibreTranslate 默认实例限制或速度问题，可在 `index.html` 中修改 `LIBRE_URL` 常量为你自己的 LibreTranslate 部署地址。
 
+### 待开发功能
+- [ ] 翻译框大小可调
+- [ ] 朗读发音功能
+- [ ] 更换翻译源API
+
+## 致谢
+- [LibreTranslate](https://libretranslate.com/) – 翻译API
+- [不蒜子](https://busuanzi.ibruce.info/) – 计数器
+
+## License
+MIT 
+
 ---
 
 ## Introduction
@@ -37,11 +49,16 @@ MultiTranslator is an open-source, zero-dependency web translator powered by the
 
 > If the default LibreTranslate endpoint is slow or rate-limited, change the `LIBRE_URL` constant in `index.html` to your own instance.
 
----
+### Features to be developed
+- [ ] Adjustable translation box size
+- [ ] Read-aloud pronunciation function
+- [ ] Change translation source API
 
-## Credits / 致谢
+## Credits
 - [LibreTranslate](https://libretranslate.com/) – Translation API
 - [Busuanzi](https://busuanzi.ibruce.info/) – Page-view counter
 
 ## License
 MIT 
+
+---
