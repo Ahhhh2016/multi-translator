@@ -10,6 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com/3.3.3"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <!-- Favicon: same language icon as the header logo -->
+    <link rel="icon" type="image/svg+xml" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/svgs/solid/language.svg">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -63,6 +65,29 @@
         .logo {
             font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
         }
+        /* Resize handle for cards */
+        .resize-handle {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            right: 6px;
+            bottom: 6px;
+            cursor: nwse-resize;
+        }
+        .resize-handle::before {
+            content: '';
+            position: absolute;
+            right: 1px;
+            bottom: 1px;
+            width: 12px;
+            height: 12px;
+            border-right: 2px solid #BDBDBD;
+            border-bottom: 2px solid #BDBDBD;
+            border-radius: 1px;
+        }
+        .translation-window.resizing {
+            user-select: none;
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -71,7 +96,7 @@
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="logo text-xl font-semibold flex items-center space-x-2">
                 <i class="fa-solid fa-language"></i>
-                <span>Multi Translator</span>
+                <span>MultiTranslator</span>
             </h1>
             <button id="add-window-btn" class="btn bg-[#333333] text-white px-4 py-2 rounded-lg text-sm">
                 + 添加
@@ -167,6 +192,117 @@
             const confirmAddBtn = document.getElementById('confirm-add-btn');
             const sourceLanguageSelect = document.getElementById('source-language');
             const targetLanguageSelect = document.getElementById('target-language');
+            const lgQuery = window.matchMedia('(min-width: 1024px)'); // 对应 Tailwind 的 lg 断点
+
+            // Masonry 布局：在大屏幕使用双列容器，新增卡片放入高度较小的一列
+            function getColumnWrappers() {
+                const col1 = translationContainer.querySelector('[data-column="1"]');
+                const col2 = translationContainer.querySelector('[data-column="2"]');
+                return [col1, col2];
+            }
+
+            function ensureColumnWrappers() {
+                let [col1, col2] = getColumnWrappers();
+                if (!col1 || !col2) {
+                    // 将已有卡片提取出来，稍后再按高度/跨度分配
+                    const existingCards = Array.from(translationContainer.querySelectorAll(':scope > .translation-window'));
+                    translationContainer.innerHTML = '';
+                    // 创建两列
+                    col1 = document.createElement('div');
+                    col1.dataset.column = '1';
+                    col1.className = 'flex flex-col gap-6';
+                    col2 = document.createElement('div');
+                    col2.dataset.column = '2';
+                    col2.className = 'flex flex-col gap-6';
+                    translationContainer.appendChild(col1);
+                    translationContainer.appendChild(col2);
+                    // 重新分配已存在的卡片（span 2 的直接放在容器中跨两列，其余进较短列）
+                    existingCards.forEach(card => {
+                        if ((card.dataset.span || '1') === '2') {
+                            translationContainer.appendChild(card);
+                            card.style.gridColumn = '1 / -1';
+                        } else {
+                            const h1 = measureColumnHeight(col1);
+                            const h2 = measureColumnHeight(col2);
+                            const targetCol = h1 <= h2 ? col1 : col2;
+                            targetCol.appendChild(card);
+                        }
+                    });
+                }
+            }
+
+            function teardownColumnWrappers() {
+                const [col1, col2] = getColumnWrappers();
+                if (!col1 || !col2) return;
+                const allCards = [...col1.children, ...col2.children];
+                // 清空容器并放回所有卡片
+                translationContainer.innerHTML = '';
+                allCards.forEach(card => translationContainer.appendChild(card));
+            }
+
+            function measureColumnHeight(columnEl) {
+                // 使用 getBoundingClientRect 累加子元素高度，避免布局异步问题
+                let total = 0;
+                Array.from(columnEl.children).forEach(child => {
+                    total += child.getBoundingClientRect().height;
+                });
+                return total;
+            }
+
+            function appendCardResponsive(card) {
+                if (lgQuery.matches) {
+                    ensureColumnWrappers();
+                    const [col1, col2] = getColumnWrappers();
+                    if ((card.dataset.span || '1') === '2') {
+                        translationContainer.appendChild(card);
+                        card.style.gridColumn = '1 / -1';
+                    } else {
+                        const h1 = measureColumnHeight(col1);
+                        const h2 = measureColumnHeight(col2);
+                        const targetCol = h1 <= h2 ? col1 : col2;
+                        targetCol.appendChild(card);
+                    }
+                } else {
+                    // 小屏幕：单列，直接追加
+                    translationContainer.appendChild(card);
+                }
+            }
+
+            function moveCardToFullWidth(card) {
+                if (!lgQuery.matches) return;
+                ensureColumnWrappers();
+                card.dataset.span = '2';
+                translationContainer.appendChild(card);
+                card.style.gridColumn = '1 / -1';
+            }
+
+            function moveCardToColumns(card) {
+                if (!lgQuery.matches) return;
+                ensureColumnWrappers();
+                card.dataset.span = '1';
+                card.style.gridColumn = '';
+                // 放入较短列
+                const [col1, col2] = getColumnWrappers();
+                const h1 = measureColumnHeight(col1);
+                const h2 = measureColumnHeight(col2);
+                const targetCol = h1 <= h2 ? col1 : col2;
+                targetCol.appendChild(card);
+            }
+
+            function applyResponsiveLayout() {
+                if (lgQuery.matches) {
+                    ensureColumnWrappers();
+                } else {
+                    teardownColumnWrappers();
+                }
+            }
+            // 监听断点变化
+            if (lgQuery.addEventListener) {
+                lgQuery.addEventListener('change', applyResponsiveLayout);
+            } else if (lgQuery.addListener) {
+                // 兼容旧浏览器
+                lgQuery.addListener(applyResponsiveLayout);
+            }
 
             // 1. 异步翻译函数 —— 以 LibreTranslate 为例
             async function translateText(text, sourceLang, targetLang) {
@@ -213,13 +349,14 @@
             function createTranslationWindow(source, target, sourceName, targetName) {
                 const windowId = `window-${Date.now()}`;
                 const card = document.createElement('div');
-                card.className = 'translation-window bg-white rounded-lg border border-[#E0E0E0] overflow-hidden fade-in';
+                card.className = 'translation-window bg-white rounded-lg border border-[#E0E0E0] overflow-hidden fade-in relative';
                 card.id = windowId;
                 // 元数据用于持久化
                 card.dataset.source = source;
                 card.dataset.target = target;
                 card.dataset.sourceName = sourceName;
                 card.dataset.targetName = targetName;
+                card.dataset.span = '1';
                 
                 card.innerHTML = `
                     <div class="bg-[#F5F5F5] py-2 px-4 flex justify-between items-center h-10">
@@ -237,7 +374,7 @@
                                       data-source="${source}"></textarea>
                         </div>
                         <div class="p-4">
-                            <div class="relative w-full h-40">
+                            <div class="relative w-full h-40" data-result-wrapper="true">
                                 <div class="w-full h-full p-3 bg-[#F9F9F9] overflow-auto rounded-lg pr-10" data-target="${target}"></div>
                                 <button class="copy-btn absolute bottom-3 right-3 text-[#666666] hover:text-[#333333]" title="复制">
                                     <i class="fa-regular fa-copy"></i>
@@ -245,10 +382,11 @@
                             </div>
                         </div>
                     </div>
+                    <div class="resize-handle" title="拖动调整大小"></div>
                 `;
                 
                 // 添加到容器
-                translationContainer.appendChild(card);
+                appendCardResponsive(card);
                 // 保存当前状态
                 saveCurrentWindows();
                 
@@ -305,6 +443,66 @@
                         saveCurrentWindows();
                     }, 200);
                 });
+
+                // 调整大小（右下角拖拽）
+                const handle = card.querySelector('.resize-handle');
+                const resultWrapper = card.querySelector('[data-result-wrapper="true"]');
+                let isResizing = false;
+                let startX = 0;
+                let startY = 0;
+                let startHeight = 0;
+                const minHeight = 120;
+
+                function onMouseMove(e) {
+                    if (!isResizing) return;
+                    const deltaY = e.clientY - startY;
+                    const nextHeight = Math.max(minHeight, startHeight + deltaY);
+                    // 同步左右两侧高度
+                    textarea.style.height = nextHeight + 'px';
+                    resultWrapper.style.height = nextHeight + 'px';
+
+                    // 宽度：在大屏幕下，横向拖动切换 1/2 列占位（Masonry 模式下会在两列与全宽之间移动）
+                    if (lgQuery.matches) {
+                        const deltaX = e.clientX - startX;
+                        const currentSpan = card.dataset.span || '1';
+                        if (currentSpan === '1' && deltaX > 60) {
+                            // 切到 2 列宽
+                            // 在 Masonry 下移动到容器并跨两列；非 Masonry 直接跨 2 列
+                            moveCardToFullWidth(card);
+                        } else if (currentSpan === '2' && deltaX < -60) {
+                            // 切回 1 列宽
+                            const [col1, col2] = getColumnWrappers();
+                            if (col1 && col2) {
+                                moveCardToColumns(card);
+                            } else {
+                                // 非 Masonry，仅清除跨列样式
+                                card.dataset.span = '1';
+                                card.style.gridColumn = '';
+                            }
+                        }
+                    }
+                }
+
+                function onMouseUp() {
+                    if (!isResizing) return;
+                    isResizing = false;
+                    card.classList.remove('resizing');
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                }
+
+                if (handle) {
+                    handle.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        isResizing = true;
+                        startX = e.clientX;
+                        startY = e.clientY;
+                        startHeight = parseFloat(getComputedStyle(textarea).height) || 160;
+                        card.classList.add('resizing');
+                        document.addEventListener('mousemove', onMouseMove);
+                        document.addEventListener('mouseup', onMouseUp);
+                    });
+                }
             }
 
             // 初始化翻译窗口（优先使用本地保存）
