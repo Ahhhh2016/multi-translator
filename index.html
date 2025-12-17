@@ -112,9 +112,14 @@
                 <i class="fa-solid fa-language"></i>
                 <span>MultiTranslator</span>
             </h1>
-            <button id="add-window-btn" class="btn bg-[#333333] text-white px-4 py-2 rounded-lg text-sm">
-                + 添加
-            </button>
+            <div class="flex items-center gap-2">
+                <button id="import-deepl-btn" class="px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm text-[#333333] hover:bg-[#F5F5F5]">
+                    导入 DeepL API Key
+                </button>
+                <button id="add-window-btn" class="btn bg-[#333333] text-white px-4 py-2 rounded-lg text-sm">
+                    + 添加
+                </button>
+            </div>
         </div>
     </header>
 
@@ -156,6 +161,39 @@
             <div class="mt-6 flex justify-end space-x-3">
                 <button id="cancel-modal-btn" class="px-4 py-2 border border-[#E0E0E0] rounded-lg text-[#333333] hover:bg-[#F5F5F5]">取消</button>
                 <button id="confirm-add-btn" class="btn bg-[#333333] text-white px-4 py-2 rounded-lg">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DeepL Key 导入模态框 -->
+    <div id="deepl-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 class="text-lg font-medium mb-4">导入 DeepL API Key</h3>
+            <div class="space-y-3">
+                <div>
+                    <label for="deepl-key-input" class="block text-sm text-[#666666] mb-1">API Key</label>
+                    <input id="deepl-key-input" type="password" class="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#333333]" placeholder="请输入 DeepL API Key">
+                </div>
+                <div>
+                    <label for="deepl-plan-select" class="block text-sm text-[#666666] mb-1">计划 / Plan</label>
+                    <select id="deepl-plan-select" class="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#333333]">
+                        <option value="auto">自动判断（推荐）</option>
+                        <option value="free">Free（api-free.deepl.com）</option>
+                        <option value="pro">Pro（api.deepl.com）</option>
+                    </select>
+                </div>
+                <div class="text-xs text-[#666666] leading-5">
+                    <p id="deepl-tip-en" class="">
+                        You can find and manage your API keys in the “API Keys &amp; Limits” (<a href="https://www.deepl.com/your-account/keys" target="_blank" class="text-blue-600 hover:underline">https://www.deepl.com/your-account/keys</a>) tab when signed into your DeepL API account. The free plan has 500,000 character limit / month.
+                    </p>
+                    <p id="deepl-tip-zh" class="">
+                        登录 DeepL API 帐户后，您可以在“API 密钥和限制”（<a href="https://www.deepl.com/your-account/keys" target="_blank" class="text-blue-600 hover:underline">https://www.deepl.com/your-account/keys</a>）选项卡中查找和管理您的 API 密钥。免费套餐每月有 50 万字符的使用限制。
+                    </p>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button id="deepl-cancel-btn" class="px-4 py-2 border border-[#E0E0E0] rounded-lg text-[#333333] hover:bg-[#F5F5F5]">取消</button>
+                <button id="deepl-save-btn" class="btn bg-[#333333] text-white px-4 py-2 rounded-lg">保存</button>
             </div>
         </div>
     </div>
@@ -204,9 +242,82 @@
             const languageModal = document.getElementById('language-modal');
             const cancelModalBtn = document.getElementById('cancel-modal-btn');
             const confirmAddBtn = document.getElementById('confirm-add-btn');
+            // DeepL 导入相关元素
+            const importDeeplBtn = document.getElementById('import-deepl-btn');
+            const deeplModal = document.getElementById('deepl-modal');
+            const deeplKeyInput = document.getElementById('deepl-key-input');
+            const deeplPlanSelect = document.getElementById('deepl-plan-select');
+            const deeplSaveBtn = document.getElementById('deepl-save-btn');
+            const deeplCancelBtn = document.getElementById('deepl-cancel-btn');
+            const deeplTipEn = document.getElementById('deepl-tip-en');
+            const deeplTipZh = document.getElementById('deepl-tip-zh');
             const sourceLanguageSelect = document.getElementById('source-language');
             const targetLanguageSelect = document.getElementById('target-language');
             const lgQuery = window.matchMedia('(min-width: 1024px)'); // 对应 Tailwind 的 lg 断点
+
+            // DeepL Key: 获取/保存
+            function getDeepLKey() {
+                return localStorage.getItem('deepl_api_key') || '';
+            }
+            function setDeepLKey(key) {
+                if (!key) {
+                    localStorage.removeItem('deepl_api_key');
+                } else {
+                    localStorage.setItem('deepl_api_key', key);
+                }
+            }
+            function getDeepLPlan() {
+                return localStorage.getItem('deepl_api_plan') || 'auto';
+            }
+            function setDeepLPlan(plan) {
+                if (!plan) {
+                    localStorage.removeItem('deepl_api_plan');
+                } else {
+                    localStorage.setItem('deepl_api_plan', plan);
+                }
+            }
+            function showDeeplModal() {
+                // 不回显已有 key，避免肩窥
+                deeplKeyInput.value = '';
+                // 回显计划
+                if (deeplPlanSelect) {
+                    deeplPlanSelect.value = getDeepLPlan();
+                }
+                deeplModal.classList.remove('hidden');
+            }
+            function hideDeeplModal() {
+                deeplModal.classList.add('hidden');
+            }
+            // 根据用户语言显示提示
+            (function initDeeplTips() {
+                const lang = (navigator.language || '').toLowerCase();
+                const isZh = lang.startsWith('zh');
+                deeplTipZh.style.display = isZh ? '' : 'none';
+                deeplTipEn.style.display = isZh ? 'none' : '';
+            })();
+            // 绑定导入按钮与模态框
+            if (importDeeplBtn) {
+                importDeeplBtn.addEventListener('click', showDeeplModal);
+            }
+            if (deeplCancelBtn) {
+                deeplCancelBtn.addEventListener('click', hideDeeplModal);
+            }
+            if (deeplSaveBtn) {
+                deeplSaveBtn.addEventListener('click', () => {
+                    const key = (deeplKeyInput.value || '').trim();
+                    const plan = deeplPlanSelect ? deeplPlanSelect.value : 'auto';
+                    setDeepLKey(key);
+                    setDeepLPlan(plan);
+                    alert(key ? 'DeepL API Key 已保存到本地浏览器（仅此设备）' : '已清除 DeepL API Key');
+                    hideDeeplModal();
+                });
+            }
+            // 点击模态框外部关闭
+            if (deeplModal) {
+                deeplModal.addEventListener('click', function(e) {
+                    if (e.target === deeplModal) hideDeeplModal();
+                });
+            }
 
             // Masonry 布局：在大屏幕使用双列容器，新增卡片放入高度较小的一列
             function getColumnWrappers() {
@@ -318,9 +429,88 @@
                 lgQuery.addListener(applyResponsiveLayout);
             }
 
-            // 1. 异步翻译函数 —— 以 LibreTranslate 为例
+            // DeepL 语言映射
+            function mapAppLangToDeepL(appLang) {
+                const map = {
+                    zh: 'ZH', // DeepL 简体中文
+                    en: 'EN',
+                    ja: 'JA',
+                    ko: 'KO',
+                    fr: 'FR',
+                    de: 'DE',
+                };
+                return map[appLang] || (appLang ? appLang.toUpperCase() : '');
+            }
+            // 使用 DeepL 翻译（若存在用户的 API Key）
+            async function translateWithDeepL(text, sourceLang, targetLang) {
+                const apiKey = getDeepLKey();
+                if (!apiKey) throw new Error('No DeepL API key');
+                // 端点选择（根据计划或自动判断）
+                const plan = getDeepLPlan();
+                let endpoints = [];
+                if (plan === 'free') {
+                    endpoints = ['https://api-free.deepl.com/v2/translate'];
+                } else if (plan === 'pro') {
+                    endpoints = ['https://api.deepl.com/v2/translate'];
+                } else {
+                    const looksFree = apiKey.includes(':fx'); // 常见 free key 特征
+                    endpoints = looksFree
+                        ? ['https://api-free.deepl.com/v2/translate', 'https://api.deepl.com/v2/translate']
+                        : ['https://api.deepl.com/v2/translate', 'https://api-free.deepl.com/v2/translate'];
+                }
+                // 使用 x-www-form-urlencoded，避免 Authorization 自定义头触发预检
+                const params = new URLSearchParams();
+                params.set('auth_key', apiKey);
+                params.set('text', text);
+                const tgt = mapAppLangToDeepL(targetLang);
+                if (!tgt) throw new Error('Invalid target_lang');
+                params.set('target_lang', tgt);
+                if (sourceLang) {
+                    const src = mapAppLangToDeepL(sourceLang);
+                    if (src) params.set('source_lang', src);
+                }
+                let resp, data;
+                let lastErr = null;
+                for (const endpoint of endpoints) {
+                    try {
+                        resp = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                                'Accept': 'application/json',
+                            },
+                            body: params.toString(),
+                            mode: 'cors',
+                        });
+                        if (!resp.ok) {
+                            const errText = await resp.text().catch(() => '');
+                            lastErr = new Error(`DeepL error ${resp.status}: ${errText}`);
+                            continue;
+                        }
+                        data = await resp.json();
+                        break;
+                    } catch (e) {
+                        lastErr = e;
+                        continue;
+                    }
+                }
+                if (!data) throw lastErr || new Error('DeepL request failed');
+                return data?.translations?.[0]?.text ?? '';
+            }
+            // 1. 异步翻译函数 —— 优先使用 DeepL（若用户提供 Key），否则回退 LibreTranslate
             async function translateText(text, sourceLang, targetLang) {
                 if (!text.trim()) return '';
+
+                // 优先尝试 DeepL（仅当用户已设置 API Key）
+                const deeplKey = getDeepLKey();
+                if (deeplKey) {
+                    try {
+                        return await translateWithDeepL(text, sourceLang, targetLang);
+                    } catch (e) {
+                        console.error('DeepL translate error:', e);
+                        // 失败则继续回退 LibreTranslate
+                    }
+                }
 
                 try {
                     // 可用的 LibreTranslate 公共实例（按优先级从高到低）
