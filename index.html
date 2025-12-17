@@ -88,6 +88,20 @@
         .translation-window.resizing {
             user-select: none;
         }
+        /* Drag & drop (reorder) */
+        .drag-handle {
+            cursor: grab;
+        }
+        .translation-window.dragging {
+            opacity: 0.85;
+            user-select: none;
+            pointer-events: none;
+        }
+        .drop-placeholder {
+            background-color: #F1F1F1;
+            border: 2px dashed #BDBDBD;
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -345,6 +359,196 @@
                 }
             }
 
+            // 拖拽排序：通过标题栏拖动卡片在同一父容器内重排（小屏：在主容器；大屏：在所在列内）
+            function setupDragReorder(card) {
+                const header = card.querySelector('.card-title');
+                if (!header) return;
+                let isDragging = false;
+                let placeholder = null;
+                let startOffsetX = 0;
+                let startOffsetY = 0;
+                let originParent = null;
+                let lastParent = null;
+                let lastZone = null; // 'column' | 'full' | 'single'
+
+                function candidateSiblings(parentEl) {
+                    return Array.from(parentEl.children).filter(el =>
+                        el !== card &&
+                        el !== placeholder &&
+                        el.classList &&
+                        el.classList.contains('translation-window')
+                    );
+                }
+
+                function findBeforeEl(parentEl, clientY) {
+                    const siblings = candidateSiblings(parentEl);
+                    for (const el of siblings) {
+                        const r = el.getBoundingClientRect();
+                        const midY = r.top + r.height / 2;
+                        if (clientY < midY) return el;
+                    }
+                    return null;
+                }
+
+                function findBeforeFullWidth(clientY) {
+                    // 仅考虑 full-width 卡片，按垂直顺序插入；若比列容器还靠上，则插在列容器之前（置顶）
+                    const [col1, col2] = getColumnWrappers();
+                    const r1 = col1?.getBoundingClientRect();
+                    const r2 = col2?.getBoundingClientRect();
+                    const topBoundary = Math.min(
+                        r1 ? r1.top : Number.POSITIVE_INFINITY,
+                        r2 ? r2.top : Number.POSITIVE_INFINITY
+                    );
+                    if (clientY < topBoundary && (col1 || col2)) {
+                        // 放在容器最前（列容器之前），实现“置顶”
+                        return col1 || col2 || translationContainer.firstChild;
+                    }
+                    const fullCards = Array.from(
+                        translationContainer.querySelectorAll(':scope > .translation-window[data-span="2"]')
+                    ).filter(el => el !== card && el !== placeholder);
+                    for (const el of fullCards) {
+                        const r = el.getBoundingClientRect();
+                        const midY = r.top + r.height / 2;
+                        if (clientY < midY) return el;
+                    }
+                    return null;
+                }
+
+                function onPointerMove(e) {
+                    if (!isDragging) return;
+                    // 跟随指针
+                    const x = e.clientX - startOffsetX;
+                    const y = e.clientY - startOffsetY;
+                    card.style.left = x + 'px';
+                    card.style.top = y + 'px';
+
+                    // 目标父容器与区域类型判断
+                    let targetParent = lastParent || originParent;
+                    let zone = 'single';
+                    if (lgQuery.matches) {
+                        // 确保列容器存在
+                        ensureColumnWrappers();
+                        const [col1, col2] = getColumnWrappers();
+                        const r1 = col1?.getBoundingClientRect();
+                        const r2 = col2?.getBoundingClientRect();
+                        if (r1 && e.clientX >= r1.left && e.clientX <= r1.right) {
+                            targetParent = col1;
+                            zone = 'column';
+                        } else if (r2 && e.clientX >= r2.left && e.clientX <= r2.right) {
+                            targetParent = col2;
+                            zone = 'column';
+                        } else {
+                            targetParent = translationContainer;
+                            zone = 'full';
+                        }
+                    }
+
+                    // 切换占位父容器与样式
+                    if (targetParent !== placeholder.parentElement) {
+                        targetParent.appendChild(placeholder);
+                    }
+                    lastParent = targetParent;
+                    lastZone = zone;
+                    if (zone === 'full' && lgQuery.matches) {
+                        placeholder.style.gridColumn = '1 / -1';
+                    } else {
+                        placeholder.style.gridColumn = '';
+                    }
+
+                    // 在目标内选择插入位置
+                    if (zone === 'full' && lgQuery.matches) {
+                        const beforeFW = findBeforeFullWidth(e.clientY);
+                        if (beforeFW) {
+                            translationContainer.insertBefore(placeholder, beforeFW);
+                        } else {
+                            translationContainer.appendChild(placeholder);
+                        }
+                    } else {
+                        const beforeEl = findBeforeEl(targetParent, e.clientY);
+                        if (beforeEl) {
+                            targetParent.insertBefore(placeholder, beforeEl);
+                        } else {
+                            targetParent.appendChild(placeholder);
+                        }
+                    }
+                }
+
+                function cleanupDrag() {
+                    isDragging = false;
+                    document.removeEventListener('pointermove', onPointerMove);
+                    document.removeEventListener('pointerup', onPointerUp);
+                    document.removeEventListener('pointercancel', onPointerUp);
+                    document.body.style.userSelect = '';
+                    // 还原卡片样式
+                    card.classList.remove('dragging');
+                    card.style.position = '';
+                    card.style.zIndex = '';
+                    card.style.width = '';
+                    card.style.left = '';
+                    card.style.top = '';
+                }
+
+                function onPointerUp() {
+                    if (!isDragging) return;
+                    // 放置卡片并根据区域设置 span
+                    if (placeholder && placeholder.parentElement) {
+                        const parent = placeholder.parentElement;
+                        const dropInFullZone = lgQuery.matches && parent === translationContainer;
+                        if (dropInFullZone) {
+                            card.dataset.span = '2';
+                            card.style.gridColumn = '1 / -1';
+                            parent.insertBefore(card, placeholder);
+                        } else {
+                            // 列内或小屏
+                            if (lgQuery.matches) {
+                                card.dataset.span = '1';
+                                card.style.gridColumn = '';
+                            }
+                            parent.insertBefore(card, placeholder);
+                        }
+                        parent.removeChild(placeholder);
+                    }
+                    placeholder = null;
+                    cleanupDrag();
+                    saveCurrentWindows();
+                }
+
+                header.addEventListener('pointerdown', (e) => {
+                    // 只响应主按钮
+                    if (e.button !== 0) return;
+                    e.preventDefault();
+                    if (lgQuery.matches) {
+                        ensureColumnWrappers();
+                    }
+                    const rect = card.getBoundingClientRect();
+                    startOffsetX = e.clientX - rect.left;
+                    startOffsetY = e.clientY - rect.top;
+                    // 创建占位元素
+                    placeholder = document.createElement('div');
+                    placeholder.className = 'drop-placeholder';
+                    placeholder.style.height = rect.height + 'px';
+                    placeholder.style.borderRadius = getComputedStyle(card).borderRadius;
+                    originParent = card.parentElement;
+                    lastParent = originParent;
+                    originParent.insertBefore(placeholder, card.nextSibling);
+
+                    // 固定卡片到视口层，随指针移动
+                    card.classList.add('dragging');
+                    card.style.position = 'fixed';
+                    card.style.zIndex = '9999';
+                    card.style.width = rect.width + 'px';
+                    card.style.left = rect.left + 'px';
+                    card.style.top = rect.top + 'px';
+
+                    // 捕获并监听移动/结束
+                    isDragging = true;
+                    document.body.style.userSelect = 'none';
+                    document.addEventListener('pointermove', onPointerMove);
+                    document.addEventListener('pointerup', onPointerUp);
+                    document.addEventListener('pointercancel', onPointerUp);
+                });
+            }
+
             // 创建翻译窗口
             function createTranslationWindow(source, target, sourceName, targetName) {
                 const windowId = `window-${Date.now()}`;
@@ -359,7 +563,7 @@
                 card.dataset.span = '1';
                 
                 card.innerHTML = `
-                    <div class="bg-[#F5F5F5] py-2 px-4 flex justify-between items-center h-10">
+                    <div class="card-title drag-handle bg-[#F5F5F5] py-2 px-4 flex justify-between items-center h-10">
                         <div class="text-sm text-[#333333]">
                             ${sourceName} → ${targetName}
                         </div>
@@ -503,6 +707,9 @@
                         document.addEventListener('mouseup', onMouseUp);
                     });
                 }
+                
+                // 标题栏拖拽排序
+                setupDragReorder(card);
             }
 
             // 初始化翻译窗口（优先使用本地保存）
