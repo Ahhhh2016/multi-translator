@@ -190,9 +190,11 @@
                         登录 DeepL API 帐户后，您可以在“API 密钥和限制”（<a href="https://www.deepl.com/your-account/keys" target="_blank" class="text-blue-600 hover:underline">https://www.deepl.com/your-account/keys</a>）选项卡中查找和管理您的 API 密钥。免费套餐每月有 50 万字符的使用限制。
                     </p>
                 </div>
+                <div id="deepl-key-status" class="text-xs text-[#666666] leading-5"></div>
             </div>
             <div class="mt-6 flex justify-end space-x-3">
                 <button id="deepl-cancel-btn" class="px-4 py-2 border border-[#E0E0E0] rounded-lg text-[#333333] hover:bg-[#F5F5F5]">取消</button>
+                <button id="deepl-delete-btn" class="px-4 py-2 border border-[#E0E0E0] rounded-lg text-[#CC0000] hover:bg-[#FFF5F5]">删除</button>
                 <button id="deepl-save-btn" class="btn bg-[#333333] text-white px-4 py-2 rounded-lg">保存</button>
             </div>
         </div>
@@ -249,11 +251,29 @@
             const deeplPlanSelect = document.getElementById('deepl-plan-select');
             const deeplSaveBtn = document.getElementById('deepl-save-btn');
             const deeplCancelBtn = document.getElementById('deepl-cancel-btn');
+            const deeplDeleteBtn = document.getElementById('deepl-delete-btn');
             const deeplTipEn = document.getElementById('deepl-tip-en');
             const deeplTipZh = document.getElementById('deepl-tip-zh');
+            const deeplKeyStatus = document.getElementById('deepl-key-status');
             const sourceLanguageSelect = document.getElementById('source-language');
             const targetLanguageSelect = document.getElementById('target-language');
             const lgQuery = window.matchMedia('(min-width: 1024px)'); // 对应 Tailwind 的 lg 断点
+            // 后端配置与可用性探测
+            const BACKEND_URL = (localStorage.getItem('backend_url') || 'http://localhost:3001').replace(/\/+$/, '');
+            let backendReachable = false;
+            let backendHasServerKey = false;
+            (async function initBackendHealth() {
+                try {
+                    const r = await fetch(BACKEND_URL + '/health', { mode: 'cors' });
+                    if (r.ok) {
+                        const j = await r.json().catch(() => null);
+                        backendReachable = true;
+                        backendHasServerKey = Boolean(j && j.deeplKeyConfigured);
+                    }
+                } catch (_) {
+                    // 后端不可用时保持为 false，继续走前端直连与公共实例逻辑
+                }
+            })();
 
             // DeepL Key: 获取/保存
             function getDeepLKey() {
@@ -283,6 +303,20 @@
                 if (deeplPlanSelect) {
                     deeplPlanSelect.value = getDeepLPlan();
                 }
+                // 显示当前 Key 状态，并配置删除按钮可用性
+                if (deeplKeyStatus) {
+                    const hasKey = !!getDeepLKey();
+                    deeplKeyStatus.textContent = hasKey ? '当前状态：已设置 API Key' : '当前状态：未设置 API Key';
+                }
+                if (deeplDeleteBtn) {
+                    const hasKey = !!getDeepLKey();
+                    deeplDeleteBtn.disabled = !hasKey;
+                    if (hasKey) {
+                        deeplDeleteBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    } else {
+                        deeplDeleteBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                }
                 deeplModal.classList.remove('hidden');
             }
             function hideDeeplModal() {
@@ -304,11 +338,33 @@
             }
             if (deeplSaveBtn) {
                 deeplSaveBtn.addEventListener('click', () => {
+                    const prev = getDeepLKey();
                     const key = (deeplKeyInput.value || '').trim();
                     const plan = deeplPlanSelect ? deeplPlanSelect.value : 'auto';
                     setDeepLKey(key);
                     setDeepLPlan(plan);
-                    alert(key ? 'DeepL API Key 已保存到本地浏览器（仅此设备）' : '已清除 DeepL API Key');
+                    let msg = '';
+                    if (!key) {
+                        msg = '已清除 DeepL API Key';
+                    } else if (prev) {
+                        msg = 'DeepL API Key 已更新（覆盖）';
+                    } else {
+                        msg = 'DeepL API Key 已保存到本地浏览器（仅此设备）';
+                    }
+                    alert(msg);
+                    hideDeeplModal();
+                });
+            }
+            if (deeplDeleteBtn) {
+                deeplDeleteBtn.addEventListener('click', () => {
+                    if (!getDeepLKey()) {
+                        alert('当前未设置 DeepL API Key');
+                        return;
+                    }
+                    const ok = confirm('确定要删除已保存的 DeepL API Key 吗？此操作仅影响本浏览器。');
+                    if (!ok) return;
+                    setDeepLKey('');
+                    alert('已清除 DeepL API Key');
                     hideDeeplModal();
                 });
             }
@@ -441,6 +497,40 @@
                 };
                 return map[appLang] || (appLang ? appLang.toUpperCase() : '');
             }
+            // 使用后端代理 DeepL（优先，若可用）
+            async function translateViaBackend(text, sourceLang, targetLang) {
+                const apiKey = getDeepLKey(); // 可选（若用户提供则透传；否则由服务端 .env 提供）
+                const body = {
+                    text,
+                    targetLang,
+                    sourceLang
+                };
+                if (apiKey) body.apiKey = apiKey;
+                const resp = await fetch(BACKEND_URL + '/api/translate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                    mode: 'cors'
+                });
+
+                console.log(resp);
+
+                if (!resp.ok) {
+                    const textErr = await resp.text().catch(() => '');
+                    throw new Error('backend error ' + resp.status + ': ' + textErr);
+                }
+                const data = await resp.json();
+                if (!data || data.ok !== true) {
+                    throw new Error('backend response invalid');
+                }
+                // 后端当前仅代理 DeepL
+                console.log('[translate] Using Backend → DeepL', {
+                    backend: BACKEND_URL,
+                    serverHasKey: backendHasServerKey,
+                    usedClientApiKey: Boolean(apiKey)
+                });
+                return data.resultText || (data.translations && data.translations[0] && data.translations[0].text) || '';
+            }
             // 使用 DeepL 翻译（若存在用户的 API Key）
             async function translateWithDeepL(text, sourceLang, targetLang) {
                 const apiKey = getDeepLKey();
@@ -471,6 +561,7 @@
                 }
                 let resp, data;
                 let lastErr = null;
+                let endpointUsed = '';
                 for (const endpoint of endpoints) {
                     try {
                         resp = await fetch(endpoint, {
@@ -488,6 +579,7 @@
                             continue;
                         }
                         data = await resp.json();
+                        endpointUsed = endpoint;
                         break;
                     } catch (e) {
                         lastErr = e;
@@ -495,11 +587,24 @@
                     }
                 }
                 if (!data) throw lastErr || new Error('DeepL request failed');
+                if (endpointUsed) {
+                    console.log('[translate] Using DeepL (direct)', { endpoint: endpointUsed });
+                }
                 return data?.translations?.[0]?.text ?? '';
             }
             // 1. 异步翻译函数 —— 优先使用 DeepL（若用户提供 Key），否则回退 LibreTranslate
             async function translateText(text, sourceLang, targetLang) {
                 if (!text.trim()) return '';
+
+                // 优先尝试后端（若可用；当用户提供了 Key 或服务端已配置 Key 都可用）
+                try {
+                    if (backendReachable && (getDeepLKey() || backendHasServerKey)) {
+                        return await translateViaBackend(text, sourceLang, targetLang);
+                    }
+                } catch (e) {
+                    console.error('backend translate error:', e);
+                    // 失败则继续后续策略
+                }
 
                 // 优先尝试 DeepL（仅当用户已设置 API Key）
                 const deeplKey = getDeepLKey();
@@ -521,6 +626,7 @@
 
                     // 依次尝试，直到有实例返回成功
                     let resp;
+                    let usedLT = '';
                     for (const API of endpoints) {
                         try {
                             resp = await fetch(API, {
@@ -534,7 +640,10 @@
                                     format: 'text'
                                 })
                             });
-                            if (resp.ok) break;   // 成功就跳出循环
+                            if (resp.ok) {
+                                usedLT = API;
+                                break;   // 成功就跳出循环
+                            }
                         } catch (_) {
                             // 忽略当前实例的网络错误，尝试下一个
                         }
@@ -542,6 +651,9 @@
 
                     if (!resp || !resp.ok) throw new Error('all endpoints failed');
                     const data = await resp.json();
+                    if (usedLT) {
+                        console.log('[translate] Using LibreTranslate', { endpoint: usedLT });
+                    }
                     return data.translatedText;          // LibreTranslate 的返回字段
                 } catch (err) {
                     console.error('translate error:', err);
