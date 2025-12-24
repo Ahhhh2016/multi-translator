@@ -1061,6 +1061,10 @@
                 });
                 
                 // 删除窗口
+                // 防止点击删除按钮时触发标题栏的拖拽 pointerdown
+                deleteBtn.addEventListener('pointerdown', function(e) {
+                    e.stopPropagation();
+                });
                 deleteBtn.addEventListener('click', function() {
                     // 若该卡片下存在正在朗读的按钮，先停止
                     if (speakingState.button && card.contains(speakingState.button)) {
@@ -1182,6 +1186,15 @@
                 
                 if (sourceLang === targetLang) {
                     alert('源语言和目标语言不能相同');
+                    return;
+                }
+                
+                // 不允许重复添加：已存在相同源语言与目标语言的卡片
+                const exists = Array.from(document.querySelectorAll('.translation-window')).some(card =>
+                    card.dataset.source === sourceLang && card.dataset.target === targetLang
+                );
+                if (exists) {
+                    alert('已存在相同的翻译卡片（相同源语言与目标语言）');
                     return;
                 }
                 
