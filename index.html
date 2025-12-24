@@ -661,6 +661,113 @@
                 }
             }
 
+            // Web Speech API（朗读）支持
+            const isSpeechSupported = typeof window !== 'undefined'
+                && 'speechSynthesis' in window
+                && 'SpeechSynthesisUtterance' in window;
+            let cachedVoices = [];
+            function refreshVoices() {
+                try {
+                    cachedVoices = window.speechSynthesis.getVoices() || [];
+                } catch (_) {
+                    cachedVoices = [];
+                }
+            }
+            if (isSpeechSupported) {
+                refreshVoices();
+                if (typeof window.speechSynthesis.addEventListener === 'function') {
+                    window.speechSynthesis.addEventListener('voiceschanged', refreshVoices);
+                } else {
+                    window.speechSynthesis.onvoiceschanged = refreshVoices;
+                }
+            }
+            function mapAppLangToBCP47(appLang) {
+                const map = {
+                    zh: 'zh-CN',
+                    en: 'en-US',
+                    ja: 'ja-JP',
+                    ko: 'ko-KR',
+                    fr: 'fr-FR',
+                    de: 'de-DE',
+                };
+                return map[appLang] || (appLang || 'en');
+            }
+            function pickVoiceForLang(appLang) {
+                if (!isSpeechSupported) return null;
+                const targetTag = mapAppLangToBCP47(appLang).toLowerCase();
+                if (!cachedVoices || !cachedVoices.length) refreshVoices();
+                const matches = (cachedVoices || []).filter(v => {
+                    const lang = (v.lang || '').toLowerCase();
+                    return lang === targetTag || lang.startsWith(targetTag.split('-')[0] + '-');
+                });
+                if (!matches.length) return null;
+                // 轻度偏好：优先 Google，其次 Microsoft，其次任意
+                const google = matches.find(v => /google/i.test(v.name));
+                if (google) return google;
+                const ms = matches.find(v => /microsoft/i.test(v.name));
+                if (ms) return ms;
+                return matches[0];
+            }
+            const speakingState = { utterance: null, button: null };
+            function setSpeakingVisual(button, speaking) {
+                if (!button) return;
+                const icon = button.querySelector('i');
+                if (!icon) return;
+                if (speaking) {
+                    icon.classList.remove('fa-volume-high');
+                    icon.classList.add('fa-stop');
+                } else {
+                    icon.classList.remove('fa-stop');
+                    icon.classList.add('fa-volume-high');
+                }
+            }
+            function stopSpeaking() {
+                if (isSpeechSupported) {
+                    try { window.speechSynthesis.cancel(); } catch (_) {}
+                }
+                if (speakingState.button) setSpeakingVisual(speakingState.button, false);
+                speakingState.utterance = null;
+                speakingState.button = null;
+            }
+            function speakText(text, appLang, button) {
+                if (!isSpeechSupported) {
+                    alert('当前浏览器不支持朗读功能');
+                    return;
+                }
+                const content = (text || '').toString().trim();
+                if (!content) return;
+                // 若正在朗读，先停止；重复点击同一按钮则视为停止
+                if (window.speechSynthesis.speaking) {
+                    const wasSameButton = speakingState.button === button;
+                    stopSpeaking();
+                    if (wasSameButton) return;
+                }
+                const utter = new SpeechSynthesisUtterance(content);
+                utter.lang = mapAppLangToBCP47(appLang);
+                const v = pickVoiceForLang(appLang);
+                if (v) utter.voice = v;
+                utter.rate = 1;
+                utter.pitch = 1;
+                utter.onstart = () => setSpeakingVisual(button, true);
+                utter.onend = () => {
+                    if (speakingState.button === button) setSpeakingVisual(button, false);
+                    speakingState.utterance = null;
+                    speakingState.button = null;
+                };
+                utter.onerror = () => {
+                    if (speakingState.button === button) setSpeakingVisual(button, false);
+                    speakingState.utterance = null;
+                    speakingState.button = null;
+                };
+                speakingState.utterance = utter;
+                speakingState.button = button;
+                try {
+                    window.speechSynthesis.speak(utter);
+                } catch (e) {
+                    setSpeakingVisual(button, false);
+                }
+            }
+
             // 拖拽排序：通过标题栏拖动卡片在同一父容器内重排（小屏：在主容器；大屏：在所在列内）
             function setupDragReorder(card) {
                 const header = card.querySelector('.card-title');
@@ -874,15 +981,21 @@
                         </button>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2">
-                        <div class="p-4 border-r border-[#E0E0E0]">
-                            <textarea class="input-box w-full h-40 p-3 bg-white resize-none rounded-lg" 
+                        <div class="p-4 border-r border-[#E0E0E0] relative">
+                            <textarea class="input-box w-full h-40 p-3 bg-white resize-none rounded-lg pr-10" 
                                       placeholder="输入${sourceName}文本..." 
                                       data-source="${source}"></textarea>
+                            <button class="speak-source-btn absolute bottom-6 right-7 text-[#666666] hover:text-[#333333]" title="朗读">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
                         </div>
                         <div class="p-4">
                             <div class="relative w-full h-40" data-result-wrapper="true">
                                 <div class="w-full h-full p-3 bg-[#F9F9F9] overflow-auto rounded-lg pr-10" data-target="${target}"></div>
-                                <button class="copy-btn absolute bottom-3 right-3 text-[#666666] hover:text-[#333333]" title="复制">
+                                <button class="speak-target-btn absolute bottom-1 right-9 text-[#666666] hover:text-[#333333]" title="朗读">
+                                    <i class="fa-solid fa-volume-high"></i>
+                                </button>
+                                <button class="copy-btn absolute bottom-1 right-3 text-[#666666] hover:text-[#333333]" title="复制">
                                     <i class="fa-regular fa-copy"></i>
                                 </button>
                             </div>
@@ -901,6 +1014,8 @@
                 const resultDiv = card.querySelector('div[data-target]');
                 const deleteBtn = card.querySelector('.delete-btn');
                 const copyBtn = card.querySelector('.copy-btn');
+                const speakSourceBtn = card.querySelector('.speak-source-btn');
+                const speakTargetBtn = card.querySelector('.speak-target-btn');
                 
                 let timeoutId;
                 
@@ -909,6 +1024,10 @@
                     clearTimeout(timeoutId);
                     timeoutId = setTimeout(async () => {
                         const text = textarea.value;
+                        // 输入变化时，如在朗读，停止
+                        if (isSpeechSupported && window.speechSynthesis.speaking) {
+                            stopSpeaking();
+                        }
                         resultDiv.textContent = '翻译中…';
                         resultDiv.textContent = await translateText(text, source, target);
                     }, 500);
@@ -943,12 +1062,37 @@
                 
                 // 删除窗口
                 deleteBtn.addEventListener('click', function() {
+                    // 若该卡片下存在正在朗读的按钮，先停止
+                    if (speakingState.button && card.contains(speakingState.button)) {
+                        stopSpeaking();
+                    }
                     card.classList.add('fade-out');
                     setTimeout(() => {
                         card.remove();
                         saveCurrentWindows();
                     }, 200);
                 });
+
+                // 朗读：源语言输入
+                if (speakSourceBtn) {
+                    if (!isSpeechSupported) {
+                        speakSourceBtn.style.display = 'none';
+                    } else {
+                        speakSourceBtn.addEventListener('click', () => {
+                            speakText(textarea.value, source, speakSourceBtn);
+                        });
+                    }
+                }
+                // 朗读：目标语言结果
+                if (speakTargetBtn) {
+                    if (!isSpeechSupported) {
+                        speakTargetBtn.style.display = 'none';
+                    } else {
+                        speakTargetBtn.addEventListener('click', () => {
+                            speakText(resultDiv.textContent || '', target, speakTargetBtn);
+                        });
+                    }
+                }
 
                 // 调整大小（右下角拖拽）
                 const handle = card.querySelector('.resize-handle');
