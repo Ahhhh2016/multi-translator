@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi Translator</title>
+    
+    <!-- Google Fonts: Inter for modern, clean UI -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com/3.3.3"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    
+    <link rel="icon" type="image/png" href="favicon.png">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans SC', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #f8fafc; /* Slate-50 */
+            color: #1e293b; /* Slate-800 */
+        }
+        
+        /* Custom Scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .translation-card {
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .translation-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Glass effect utilities */
+        .glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+        }
+
+        /* Hide generic scrollbar in modals if needed */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-full">
+
+    <!-- Header -->
+    <header class="glass sticky top-0 z-40 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo Area -->
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary-500/30">
+                        <i class="fa-solid fa-language text-xl"></i>
+                    </div>
+                    <h1 class="text-xl font-bold tracking-tight text-slate-900 hidden sm:block">
+                        Multi<span class="text-primary-600">Translator</span>
+                    </h1>
+                </div>
+
+                <!-- Controls Area -->
+                <div class="flex items-center gap-3">
+                    <!-- UI Language Selector -->
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-globe"></i>
+                        </div>
+                        <select id="ui-lang-select" class="pl-9 pr-8 py-2 bg-slate-100 hover:bg-slate-200 border-none rounded-lg text-sm font-medium text-slate-700 focus:ring-2 focus:ring-primary-500 cursor-pointer transition-colors appearance-none">
+                            <option value="en">English</option>
+                            <option value="zh">中文</option>
+                            <option value="ja">日本語</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-500">
+                            <i class="fa-solid fa-chevron-down text-xs"></i>
+                        </div>
+                    </div>
+
+                    <!-- Settings Button -->
+                    <button id="settings-btn" class="p-2.5 rounded-lg text-slate-500 hover:text-primary-600 hover:bg-primary-50 transition-colors" title="Settings">
+                        <i class="fa-solid fa-gear text-lg"></i>
+                    </button>
+                    
+                    <!-- GitHub Link (Optional, kept style generic) -->
+                    <a href="https://github.com/Start230/Multi-Translator" target="_blank" class="p-2.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors">
+                        <i class="fa-brands fa-github text-lg"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Settings Panel (Collapsible) -->
+        <div id="settings-panel" class="hidden border-t border-slate-200 bg-slate-50/50 backdrop-blur-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                    <h3 class="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-key text-primary-500"></i>
+                        <span data-i18n="settingsTitle">DeepL API 设置</span>
+                    </h3>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <div class="relative flex-grow">
+                            <input type="password" id="deepl-auth-key" 
+                                class="w-full pl-4 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all placeholder:text-slate-400" 
+                                placeholder="Example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:fx">
+                        </div>
+                        <div class="flex gap-2 shrink-0">
+                            <button id="save-key-btn" class="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg shadow-sm shadow-primary-500/30 transition-all active:scale-95">
+                                <i class="fa-solid fa-check mr-1.5"></i> <span data-i18n="saveKey">保存</span>
+                            </button>
+                            <button id="delete-key-btn" class="px-5 py-2.5 bg-white border border-slate-200 hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-slate-600 text-sm font-medium rounded-lg shadow-sm transition-all active:scale-95">
+                                <i class="fa-solid fa-trash-can mr-1.5"></i> <span data-i18n="deleteKey">删除</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-center gap-2 text-xs">
+                        <span class="font-medium text-slate-500" data-i18n="statusLabel">状态:</span>
+                        <span id="deepl-key-status" class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-medium">Checking...</span>
+                        <a href="https://www.deepl.com/pro-api" target="_blank" class="ml-auto text-primary-600 hover:text-primary-700 hover:underline">
+                            Get DeepL API Key &rarr;
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        
+        <!-- Input Section -->
+        <section class="mb-10">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden focus-within:ring-2 focus-within:ring-primary-500/50 focus-within:border-primary-500 transition-all">
+                <div class="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100">
+                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider pl-1">Source Text</span>
+                    <button id="clear-text-btn" class="text-slate-400 hover:text-slate-600 text-xs font-medium px-2 py-1 rounded hover:bg-slate-200 transition-colors" title="Clear text">
+                        Clear
+                    </button>
+                </div>
+                <div class="relative">
+                    <textarea id="source-text" 
+                        class="w-full min-h-[160px] p-5 text-lg text-slate-800 placeholder:text-slate-300 border-none resize-y focus:ring-0 leading-relaxed bg-transparent"
+                        placeholder="Type or paste text here to translate..."></textarea>
+                    
+                    <div class="absolute bottom-4 right-4 z-10">
+                        <button id="translate-btn" class="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-xl shadow-lg shadow-primary-500/30 font-semibold transition-all hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm">
+                            <i class="fa-solid fa-bolt"></i>
+                            <span data-i18n="translateBtn">Translate</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Translations Grid -->
+        <section>
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group text-primary-500"></i>
+                    <span data-i18n="translationsTitle">Translations</span>
+                </h2>
+                <button id="add-lang-btn" class="group flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-600 hover:text-primary-600 border border-slate-200 px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-all">
+                    <div class="w-5 h-5 rounded-full bg-slate-100 group-hover:bg-primary-100 flex items-center justify-center text-slate-400 group-hover:text-primary-600 transition-colors">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                    </div>
+                    <span data-i18n="addLangBtn">Add Language</span>
+                </button>
+            </div>
+
+            <div id="translations-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <!-- Translation cards will be injected here via JS -->
+                <!-- Example Placeholder Structure for visual reference while loading -->
+                <div class="hidden translation-card bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col h-full">
+                    <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-50">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-6 bg-slate-200 rounded-full"></span>
+                            <h3 class="font-bold text-slate-700">Loading...</h3>
+                        </div>
+                    </div>
+                    <div class="flex-grow min-h-[100px] text-slate-600 leading-relaxed"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto py-8 text-center text-slate-400 text-sm border-t border-slate-200 bg-white">
+        <p class="mb-2">Powered by DeepL API</p>
+        <div class="flex justify-center items-center gap-2 text-xs">
+            <span id="busuanzi_container_site_pv" style="display:none;">
+                <i class="fa-solid fa-eye mr-1"></i> <span id="busuanzi_value_site_pv">--</span>
+            </span>
+            <span class="mx-1 text-slate-300">|</span>
+            <span>&copy; <script>document.write(new Date().getFullYear())</script> Multi Translator</span>
+        </div>
+    </footer>
+
+    <!-- Language Selection Modal -->
+    <div id="languageModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity opacity-0" id="modal-backdrop"></div>
+
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" id="modal-panel">
+                
+                <!-- Modal Header -->
+                <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4 border-b border-slate-100">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold leading-6 text-slate-900" id="modal-title" data-i18n="modalTitle">Select Language</h3>
+                        <button type="button" class="text-slate-400 hover:text-slate-600 transition-colors" onclick="hideModal()">
+                            <i class="fa-solid fa-xmark text-xl"></i>
+                        </button>
+                    </div>
+                    <!-- Search Input -->
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                        </div>
+                        <input type="text" id="modal-search" 
+                            class="block w-full rounded-lg border-0 py-2.5 pl-10 pr-4 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 bg-slate-50" 
+                            placeholder="Search languages...">
+                    </div>
+                </div>
+                
+                <!-- Modal Body -->
+                <div class="bg-white px-4 py-2 sm:px-6 h-[60vh] sm:h-[400px] overflow-y-auto" id="modal-lang-list">
+                    <!-- Language items injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- 1. Internationalization (UI Strings) ---
+        const I18N = {
+            en: {
+                settingsTitle: "DeepL API Settings",
+                saveKey: "Save Key",
+                deleteKey: "Delete Key",
+                statusLabel: "Status:",
+                deeplKeyStatusHas: "Configured",
+                deeplKeyStatusNone: "Not configured",
+                translateBtn: "Translate",
+                translationsTitle: "Translations",
+                addLangBtn: "Add Language",
+                modalTitle: "Select Language",
+                copy: "Copy",
+                remove: "Remove",
+                translating: "Translating...",
+                failed: "Translation failed",
+                placeholder: "Translation will appear here...",
+                sourcePlaceholder: "Type or paste text here to translate...",
+                errorNoKey: "Please set your DeepL API Key first.",
+                errorNoText: "Please enter text to translate.",
+                searchPlaceholder: "Search languages...",
+                copied: "Copied!"
+            },
+            zh: {
+                settingsTitle: "DeepL API 设置",
+                saveKey: "保存密钥",
+                deleteKey: "删除密钥",
+                statusLabel: "状态:",
+                deeplKeyStatusHas: "已配置",
+                deeplKeyStatusNone: "未配置",
+                translateBtn: "开始翻译",
+                translationsTitle: "译文列表",
+                addLangBtn: "添加语言",
+                modalTitle: "选择语言",
+                copy: "复制",
+                remove: "移除",
+                translating: "翻译中...",
+                failed: "翻译失败",
+                placeholder: "译文将显示在这里...",
+                sourcePlaceholder: "在此输入或粘贴需要翻译的文字...",
+                errorNoKey: "请先设置 DeepL API Key。",
+                errorNoText: "请输入需要翻译的文本。",
+                searchPlaceholder: "搜索语言...",
+                copied: "已复制!"
+            },
+            ja: {
+                settingsTitle: "DeepL API 設定",
+                saveKey: "保存",
+                deleteKey: "削除",
+                statusLabel: "状態:",
+                deeplKeyStatusHas: "設定済み",
+                deeplKeyStatusNone: "未設定",
+                translateBtn: "翻訳する",
+                translationsTitle: "翻訳結果",
+                addLangBtn: "言語を追加",
+                modalTitle: "言語を選択",
+                copy: "コピー",
+                remove: "削除",
+                translating: "翻訳中...",
+                failed: "翻訳失敗",
+                placeholder: "翻訳結果がここに表示されます...",
+                sourcePlaceholder: "ここにテキストを入力または貼り付けてください...",
+                errorNoKey: "先に DeepL API Key を設定してください。",
+                errorNoText: "翻訳するテキストを入力してください。",
+                searchPlaceholder: "言語を検索...",
+                copied: "コピーしました!"
+            }
+        };
+
+        const UI_LANGS = ['en', 'zh', 'ja'];
+        let currentUiLang = localStorage.getItem('ui_lang') || 'zh';
+        if (!UI_LANGS.includes(currentUiLang)) currentUiLang = 'zh';
+
+        function t(key) {
+            return I18N[currentUiLang][key] || key;
+        }
+
+        function applyI18nToStatic() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const k = el.getAttribute('data-i18n');
+                el.textContent = t(k);
+            });
+            const searchInput = document.getElementById('modal-search');
+            if (searchInput) searchInput.placeholder = t('searchPlaceholder');
+            
+            const sourceText = document.getElementById('source-text');
+            if (sourceText) sourceText.placeholder = t('sourcePlaceholder');
+        }
+
+        // --- 2. Supported Languages (DeepL) ---
+        // Includes generic flags/colors logic if needed, simplified here
+        const DEEPL_LANGUAGES = [
+            { code: "BG", name: "Bulgarian" },
+            { code: "CS", name: "Czech" },
+            { code: "DA", name: "Danish" },
+            { code: "DE", name: "German" },
+            { code: "EL", name: "Greek" },
+            { code: "EN-GB", name: "English (British)" },
+            { code: "EN-US", name: "English (American)" },
+            { code: "ES", name: "Spanish" },
+            { code: "ET", name: "Estonian" },
+            { code: "FI", name: "Finnish" },
+            { code: "FR", name: "French" },
+            { code: "HU", name: "Hungarian" },
+            { code: "ID", name: "Indonesian" },
+            { code: "IT", name: "Italian" },
+            { code: "JA", name: "Japanese" },
+            { code: "KO", name: "Korean" },
+            { code: "LT", name: "Lithuanian" },
+            { code: "LV", name: "Latvian" },
+            { code: "NB", name: "Norwegian (Bokmål)" },
+            { code: "NL", name: "Dutch" },
+            { code: "PL", name: "Polish" },
+            { code: "PT-BR", name: "Portuguese (Brazilian)" },
+            { code: "PT-PT", name: "Portuguese (European)" },
+            { code: "RO", name: "Romanian" },
+            { code: "RU", name: "Russian" },
+            { code: "SK", name: "Slovak" },
+            { code: "SL", name: "Slovenian" },
+            { code: "SV", name: "Swedish" },
+            { code: "TR", name: "Turkish" },
+            { code: "UK", name: "Ukrainian" },
+            { code: "ZH", name: "Chinese (Simplified)" }
+        ];
+
+        // --- 3. App State & Logic ---
+        const LS_KEY_API = 'deepl_api_key';
+        const LS_KEY_TARGETS = 'target_langs';
+        
+        // Default languages if none selected
+        let targetLangs = JSON.parse(localStorage.getItem(LS_KEY_TARGETS)) || ['EN-US', 'JA', 'DE']; 
+
+        // DOM Elements
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsPanel = document.getElementById('settings-panel');
+        const deeplKeyInput = document.getElementById('deepl-auth-key');
+        const saveKeyBtn = document.getElementById('save-key-btn');
+        const deleteKeyBtn = document.getElementById('delete-key-btn');
+        const deeplKeyStatus = document.getElementById('deepl-key-status');
+        
+        const sourceText = document.getElementById('source-text');
+        const clearTextBtn = document.getElementById('clear-text-btn');
+        const translateBtn = document.getElementById('translate-btn');
+        const translationsContainer = document.getElementById('translations-container');
+        
+        const addLangBtn = document.getElementById('add-lang-btn');
+        const languageModal = document.getElementById('languageModal');
+        const modalBackdrop = document.getElementById('modal-backdrop');
+        const modalPanel = document.getElementById('modal-panel');
+        const modalSearch = document.getElementById('modal-search');
+        const modalLangList = document.getElementById('modal-lang-list');
+
+        // Helper: Get API Key
+        function getDeepLKey() {
+            return localStorage.getItem(LS_KEY_API) || '';
+        }
+
+        // Helper: Init Logic
+        function init() {
+            // Apply UI Language
+            const uiSelect = document.getElementById('ui-lang-select');
+            if (uiSelect) {
+                uiSelect.value = currentUiLang;
+                uiSelect.addEventListener('change', function() {
+                    const v = String(this.value || '').toLowerCase();
+                    if (UI_LANGS.includes(v)) {
+                        currentUiLang = v;
+                        localStorage.setItem('ui_lang', v);
+                        applyI18nToStatic();
+                        refreshAllCardsI18n(); // Re-render cards to update buttons text
+                        updateKeyStatus();
+                    }
+                });
+            }
+            applyI18nToStatic();
+            
+            // Key Status
+            updateKeyStatus();
+            deeplKeyInput.value = getDeepLKey();
+
+            // Render Cards
+            renderCards();
+
+            // Bind Events
+            settingsBtn.addEventListener('click', () => {
+                settingsPanel.classList.toggle('hidden');
+            });
+
+            saveKeyBtn.addEventListener('click', () => {
+                const key = deeplKeyInput.value.trim();
+                if (key) {
+                    localStorage.setItem(LS_KEY_API, key);
+                    updateKeyStatus();
+                    alert("API Key saved!");
+                }
+            });
+
+            deleteKeyBtn.addEventListener('click', () => {
+                localStorage.removeItem(LS_KEY_API);
+                deeplKeyInput.value = '';
+                updateKeyStatus();
+            });
+
+            translateBtn.addEventListener('click', doTranslate);
+            
+            if (clearTextBtn) {
+                clearTextBtn.addEventListener('click', () => {
+                    sourceText.value = '';
+                    sourceText.focus();
+                });
+            }
+
+            addLangBtn.addEventListener('click', showModal);
+
+            modalSearch.addEventListener('input', (e) => {
+                renderModalList(e.target.value);
+            });
+        }
+
+        function updateKeyStatus() {
+            const hasKey = !!getDeepLKey();
+            deeplKeyStatus.textContent = hasKey ? t('deeplKeyStatusHas') : t('deeplKeyStatusNone');
+            deeplKeyStatus.className = `px-2 py-0.5 rounded-md font-medium ${hasKey ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`;
+        }
+
+        // --- 4. Card Rendering ---
+        function renderCards() {
+            translationsContainer.innerHTML = '';
+            targetLangs.forEach(langCode => {
+                const langObj = DEEPL_LANGUAGES.find(l => l.code === langCode);
+                const langName = langObj ? langObj.name : langCode;
+                
+                const card = document.createElement('div');
+                card.className = 'translation-card bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col h-full relative group';
+                card.setAttribute('data-lang', langCode);
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-50">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center font-bold text-xs shadow-sm">
+                                ${langCode.split('-')[0]}
+                            </div>
+                            <h3 class="font-bold text-slate-700 text-lg">${langName}</h3>
+                        </div>
+                        <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button class="copy-btn p-1.5 text-slate-400 hover:text-primary-600 hover:bg-slate-50 rounded-md transition-colors" title="${t('copy')}">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                            <button class="remove-btn p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors" title="${t('remove')}">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="result-area flex-grow min-h-[100px] text-slate-600 leading-relaxed whitespace-pre-wrap text-base break-words">${t('placeholder')}</div>
+                `;
+
+                // Bind Remove
+                card.querySelector('.remove-btn').addEventListener('click', () => {
+                    removeLanguage(langCode);
+                });
+
+                // Bind Copy
+                card.querySelector('.copy-btn').addEventListener('click', function() {
+                    const text = card.querySelector('.result-area').textContent;
+                    if (text && text !== t('placeholder') && text !== t('translating') && text !== t('failed')) {
+                        navigator.clipboard.writeText(text).then(() => {
+                            const icon = this.querySelector('i');
+                            icon.className = "fa-solid fa-check";
+                            setTimeout(() => icon.className = "fa-regular fa-copy", 1500);
+                        });
+                    }
+                });
+
+                translationsContainer.appendChild(card);
+            });
+        }
+
+        function refreshAllCardsI18n() {
+            // Re-render essentially
+            // Save current contents if meaningful? 
+            // For simplicity, we just re-render structure. 
+            // If we wanted to keep text, we'd need to cache it.
+            // Let's just re-render. User usually switches lang before translating.
+            renderCards();
+        }
+
+        function removeLanguage(code) {
+            targetLangs = targetLangs.filter(c => c !== code);
+            localStorage.setItem(LS_KEY_TARGETS, JSON.stringify(targetLangs));
+            renderCards();
+        }
+
+        function addLanguage(code) {
+            if (!targetLangs.includes(code)) {
+                targetLangs.push(code);
+                localStorage.setItem(LS_KEY_TARGETS, JSON.stringify(targetLangs));
+                renderCards();
+            }
+            hideModal();
+        }
+
+        // --- 5. Translation Logic ---
+        async function doTranslate() {
+            const text = sourceText.value.trim();
+            const apiKey = getDeepLKey();
+
+            if (!apiKey) {
+                alert(t('errorNoKey'));
+                return;
+            }
+            if (!text) {
+                alert(t('errorNoText'));
+                return;
+            }
+
+            // Set loading state
+            document.querySelectorAll('.translation-card .result-area').forEach(el => {
+                el.textContent = t('translating');
+                el.classList.add('animate-pulse');
+            });
+
+            translateBtn.disabled = true;
+            translateBtn.classList.add('opacity-75', 'cursor-not-allowed');
+
+            // Parallel requests
+            const promises = targetLangs.map(targetLang => {
+                return translateSingle(text, targetLang, apiKey)
+                    .then(result => ({ lang: targetLang, text: result, success: true }))
+                    .catch(err => ({ lang: targetLang, error: err, success: false }));
+            });
+
+            const results = await Promise.all(promises);
+
+            results.forEach(res => {
+                const card = document.querySelector(`.translation-card[data-lang="${res.lang}"]`);
+                if (card) {
+                    const area = card.querySelector('.result-area');
+                    area.classList.remove('animate-pulse');
+                    if (res.success) {
+                        area.textContent = res.text;
+                        area.classList.add('text-slate-800');
+                    } else {
+                        area.textContent = t('failed') + ": " + (res.error.message || "Unknown error");
+                        area.classList.add('text-red-500');
+                    }
+                }
+            });
+
+            translateBtn.disabled = false;
+            translateBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+        }
+
+        async function translateSingle(text, targetLang, apiKey) {
+            const isFree = apiKey.endsWith(':fx');
+            const baseUrl = isFree ? 'https://api-free.deepl.com/v2/translate' : 'https://api.deepl.com/v2/translate';
+            
+            const url = new URL(baseUrl);
+            url.searchParams.append('auth_key', apiKey);
+            url.searchParams.append('text', text);
+            url.searchParams.append('target_lang', targetLang);
+
+            try {
+                const response = await fetch(url, { method: 'POST' });
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.message || response.statusText);
+                }
+                const data = await response.json();
+                return data.translations[0].text;
+            } catch (error) {
+                console.error(`Translation error for ${targetLang}:`, error);
+                throw error;
+            }
+        }
+
+        // --- 6. Modal Logic ---
+        function showModal() {
+            renderModalList('');
+            languageModal.classList.remove('hidden');
+            // Small timeout for transition
+            setTimeout(() => {
+                modalBackdrop.classList.remove('opacity-0');
+                modalPanel.classList.remove('opacity-0', 'translate-y-4', 'sm:translate-y-0', 'sm:scale-95');
+                modalPanel.classList.add('opacity-100', 'translate-y-0', 'sm:scale-100');
+            }, 10);
+            modalSearch.value = '';
+            modalSearch.focus();
+        }
+
+        function hideModal() {
+            modalBackdrop.classList.add('opacity-0');
+            modalPanel.classList.remove('opacity-100', 'translate-y-0', 'sm:scale-100');
+            modalPanel.classList.add('opacity-0', 'translate-y-4', 'sm:translate-y-0', 'sm:scale-95');
+            
+            setTimeout(() => {
+                languageModal.classList.add('hidden');
+            }, 200);
+        }
+
+        function renderModalList(filter) {
+            modalLangList.innerHTML = '';
+            const lowerFilter = filter.toLowerCase();
+            
+            DEEPL_LANGUAGES.forEach(lang => {
+                if (targetLangs.includes(lang.code)) return; // Already added
+                if (!lang.name.toLowerCase().includes(lowerFilter) && !lang.code.toLowerCase().includes(lowerFilter)) return;
+
+                const item = document.createElement('div');
+                item.className = 'group flex items-center justify-between p-3 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors border-b border-slate-50 last:border-0';
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-xs font-bold group-hover:bg-primary-100 group-hover:text-primary-600 transition-colors">
+                            ${lang.code.split('-')[0]}
+                        </span>
+                        <span class="text-slate-700 font-medium group-hover:text-primary-700">${lang.name}</span>
+                    </div>
+                    <i class="fa-solid fa-plus text-slate-300 group-hover:text-primary-500"></i>
+                `;
+                item.onclick = () => addLanguage(lang.code);
+                modalLangList.appendChild(item);
+            });
+        }
+
+        // Close modal on backdrop click
+        window.addEventListener('click', (e) => {
+            if (e.target === modalBackdrop) {
+                hideModal();
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', init);
+
+    </script>
+    <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+</body>
+</html>

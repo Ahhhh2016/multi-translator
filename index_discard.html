@@ -4,170 +4,122 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Multi Translator</title>
+    <!-- Google Font for nicer heading -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com/3.3.3"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-    <link rel="icon" type="image/png" href="favicon_square.png">
+    <!-- Favicon: same language icon as the header logo -->
+    <link rel="icon" type="image/png" href="favicon.png">
     <style>
-        /* 基础设置：使用 Inter 字体，背景调整为细腻的浅灰 */
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #FAFAFA; /* 极浅灰背景 */
-            color: #18181B; /* Zinc-900 */
-            -webkit-font-smoothing: antialiased;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #F9F9F9;
+            color: #333333;
         }
-
-        /* 滚动条美化 */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #E4E4E7;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #A1A1AA;
-        }
-
-        /* 翻译卡片样式 */
         .translation-window {
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            box-shadow: 0 1px 2px -1px rgba(0, 0, 0, 0.1), 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-            background-color: #FFFFFF;
-            border: 1px solid #E4E4E7; /* Zinc-200 */
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
         .translation-window:hover {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            border-color: #D4D4D8;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
         }
-
-        /* 输入框样式优化 */
+        /* NEW: default border & transition for textarea */
         .input-box {
-            border: 1px solid transparent;
-            transition: all 0.2s ease;
-            background-color: transparent;
-            color: #18181B;
-            font-size: 0.95rem;
-            line-height: 1.6;
+            border: 1px solid #E0E0E0;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
         }
-        /* 聚焦时显示黑色细边框 */
+        /* UPDATED: focus style – darker border and subtle ring */
         .input-box:focus {
             outline: none;
-            background-color: #FAFAFA;
+            border-color: #333333;
+            box-shadow: 0 0 0 2px rgba(51, 51, 51, 0.1);
         }
-        
-        /* 按钮通用动效 */
         .btn {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.15s ease;
         }
-        .btn:active {
-            transform: scale(0.98);
+        .btn:hover {
+            background-color: #000000;
         }
-
-        /* 动画类 */
-        .fade-in { animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .fade-out { animation: fadeOut 0.2s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: scale(0.95); } }
-
-        /* 语言选择器 */
+        .fade-in {
+            animation: fadeIn 0.2s ease-in;
+        }
+        .fade-out {
+            animation: fadeOut 0.2s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
         .language-selector {
-            transition: border-color 0.2s, box-shadow 0.2s;
-            cursor: pointer;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2352525b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-            background-position: right 0.5rem center;
-            background-repeat: no-repeat;
-            background-size: 1.5em 1.5em;
-            padding-right: 2.5rem;
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
+            transition: all 0.15s ease;
         }
-        .language-selector:focus {
-            outline: none;
-            border-color: #18181B;
+        .language-selector:hover {
+            background-color: #F0F0F0;
         }
-        /* 顶部 UI 语言选择器的专属优化，避免与箭头重叠并保证最小宽度 */
-        #ui-lang-select.language-selector {
-            background-size: 1.25em 1.25em;
-            background-position: right 0.75rem center;
-            padding-right: 2.75rem;
-            min-width: 6.5rem; /* 约 104px，容纳 "English" 文本与箭头 */
-            white-space: nowrap;
+        .logo {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
         }
-
-        .logo { font-weight: 700; letter-spacing: -0.025em; }
-
-        /* Resize handle 优化 */
+        /* Resize handle for cards */
         .resize-handle {
             position: absolute;
-            width: 16px;
-            height: 16px;
-            right: 4px;
-            bottom: 4px;
+            width: 14px;
+            height: 14px;
+            right: 6px;
+            bottom: 6px;
             cursor: nwse-resize;
-            opacity: 0.4;
-            transition: opacity 0.2s;
         }
-        .resize-handle:hover { opacity: 1; }
         .resize-handle::before {
             content: '';
             position: absolute;
-            right: 2px;
-            bottom: 2px;
-            width: 8px;
-            height: 8px;
-            border-right: 2px solid #52525B;
-            border-bottom: 2px solid #52525B;
+            right: 1px;
+            bottom: 1px;
+            width: 12px;
+            height: 12px;
+            border-right: 2px solid #BDBDBD;
+            border-bottom: 2px solid #BDBDBD;
             border-radius: 1px;
         }
-        
-        .translation-window.resizing { user-select: none; }
-
-        /* 拖拽相关 */
-        .drag-handle { cursor: grab; }
-        .drag-handle:active { cursor: grabbing; }
+        .translation-window.resizing {
+            user-select: none;
+        }
+        /* Drag & drop (reorder) */
+        .drag-handle {
+            cursor: grab;
+        }
         .translation-window.dragging {
-            opacity: 0.9;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            transform: scale(1.02);
+            opacity: 0.85;
             user-select: none;
             pointer-events: none;
-            z-index: 50;
         }
         .drop-placeholder {
-            background-color: #F4F4F5;
-            border: 2px dashed #D4D4D8;
-            border-radius: 12px;
-        }
-
-        /* 模态框背景模糊 */
-        #language-modal, #deepl-modal {
-            backdrop-filter: blur(2px);
+            background-color: #F1F1F1;
+            border: 2px dashed #BDBDBD;
+            border-radius: 10px;
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
-    <header class="bg-white/80 backdrop-blur-md border-b border-zinc-200 sticky top-0 z-40">
-        <div class="container mx-auto px-6 h-16 flex justify-between items-center">
-            <h1 class="logo text-xl text-zinc-900 flex items-center space-x-2">
-                <img src="favicon_square.png" alt="Logo" class="h-8 w-8 opacity-90">
+<body class="min-h-screen">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white py-6 px-6 shadow-sm">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="logo text-xl font-semibold flex items-center space-x-2">
+                <img src="favicon.png" alt="Logo" class="h-6 w-6">
                 <span>MultiTranslator</span>
             </h1>
-            <div class="flex items-center gap-3">
-                <button id="import-deepl-btn" class="btn px-4 py-2 border border-zinc-200 rounded-lg text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:border-zinc-300 hover:bg-white bg-transparent">
+            <div class="flex items-center gap-2">
+                <button id="import-deepl-btn" class="px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm text-[#333333] hover:bg-[#F5F5F5]">
                     导入 DeepL API Key
                 </button>
-                <button id="add-window-btn" class="btn bg-zinc-900 hover:bg-black text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm">
+                <button id="add-window-btn" class="btn bg-[#333333] text-white px-4 py-2 rounded-lg text-sm">
                     + 添加
                 </button>
-				<select id="ui-lang-select" class="language-selector px-4 py-2 border border-zinc-200 rounded-lg text-sm font-medium text-zinc-700 bg-white">
+				<select id="ui-lang-select" class="language-selector px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm text-[#333333]">
 					<option value="zh">中文</option>
 					<option value="en">English</option>
 				</select>
@@ -175,97 +127,95 @@
         </div>
     </header>
 
-    <main class="container mx-auto py-8 px-6 flex-grow">
+    <!-- 主翻译区域 -->
+    <main class="container mx-auto py-8 px-6">
         <div id="translation-container" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            </div>
+            <!-- 默认翻译窗口将通过JS动态生成 -->
+        </div>
     </main>
 
-    <div id="language-modal" class="fixed inset-0 bg-zinc-900/40 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md border border-zinc-100 transform transition-all">
-            <h3 class="text-lg font-semibold text-zinc-900 mb-6">添加翻译窗口</h3>
-            <div class="space-y-5">
-                <div>
-                    <label class="block text-sm font-medium text-zinc-500 mb-2">源语言</label>
-                    <div class="relative">
-                        <select id="source-language" class="language-selector w-full border border-zinc-200 rounded-lg px-4 py-2.5 text-zinc-800 bg-zinc-50 focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-colors">
-                            <option value="zh">中文</option>
-                            <option value="en">英文</option>
-                            <option value="ja">日文</option>
-                            <option value="ko">韩文</option>
-                            <option value="fr">法文</option>
-                            <option value="de">德文</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-zinc-500 mb-2">目标语言</label>
-                    <div class="relative">
-                        <select id="target-language" class="language-selector w-full border border-zinc-200 rounded-lg px-4 py-2.5 text-zinc-800 bg-zinc-50 focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-colors">
-                            <option value="en">英文</option>
-                            <option value="zh">中文</option>
-                            <option value="ja">日文</option>
-                            <option value="ko">韩文</option>
-                            <option value="fr">法文</option>
-                            <option value="de">德文</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div class="mt-8 flex justify-end space-x-3">
-                <button id="cancel-modal-btn" class="px-5 py-2.5 rounded-lg text-sm font-medium text-zinc-600 hover:bg-zinc-100 transition-colors">取消</button>
-                <button id="confirm-add-btn" class="btn bg-zinc-900 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-black shadow-lg shadow-zinc-200">确认</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="deepl-modal" class="fixed inset-0 bg-zinc-900/40 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md border border-zinc-100">
-            <h3 class="text-lg font-semibold text-zinc-900 mb-6">导入 DeepL API Key</h3>
+    <!-- 语言选择模态框 -->
+    <div id="language-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 class="text-lg font-medium mb-4">添加翻译窗口</h3>
             <div class="space-y-4">
                 <div>
-                    <label for="deepl-key-input" class="block text-sm font-medium text-zinc-500 mb-2">API Key</label>
-                    <input id="deepl-key-input" type="password" class="w-full border border-zinc-200 rounded-lg px-4 py-2.5 text-zinc-800 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 bg-zinc-50 focus:bg-white transition-colors" placeholder="请输入 DeepL API Key">
+                    <label class="block text-sm text-[#666666] mb-1">源语言</label>
+                    <select id="source-language" class="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#333333]">
+                        <option value="zh">中文</option>
+                        <option value="en">英文</option>
+                        <option value="ja">日文</option>
+                        <option value="ko">韩文</option>
+                        <option value="fr">法文</option>
+                        <option value="de">德文</option>
+                    </select>
                 </div>
                 <div>
-                    <label for="deepl-plan-select" class="block text-sm font-medium text-zinc-500 mb-2">计划 / Plan</label>
-                    <div class="relative">
-                        <select id="deepl-plan-select" class="language-selector w-full border border-zinc-200 rounded-lg px-4 py-2.5 text-zinc-800 bg-zinc-50 focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-colors">
-                            <option value="auto">自动判断（推荐）</option>
-                            <option value="free">Free（api-free.deepl.com）</option>
-                            <option value="pro">Pro（api.deepl.com）</option>
-                        </select>
-                    </div>
+                    <label class="block text-sm text-[#666666] mb-1">目标语言</label>
+                    <select id="target-language" class="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#333333]">
+                        <option value="en">英文</option>
+                        <option value="zh">中文</option>
+                        <option value="ja">日文</option>
+                        <option value="ko">韩文</option>
+                        <option value="fr">法文</option>
+                        <option value="de">德文</option>
+                    </select>
                 </div>
-                <div class="text-xs text-zinc-500 leading-relaxed bg-zinc-50 p-3 rounded-lg border border-zinc-100">
-                    <p id="deepl-tip-en">
-                        You can find and manage your API keys in the “API Keys &amp; Limits” (<a href="https://www.deepl.com/your-account/keys" target="_blank" class="text-zinc-900 underline hover:no-underline">https://www.deepl.com/your-account/keys</a>) tab when signed into your DeepL API account.
-                    </p>
-                    <p id="deepl-tip-zh">
-                        登录 DeepL API 帐户后，您可以在“API 密钥和限制”（<a href="https://www.deepl.com/your-account/keys" target="_blank" class="text-zinc-900 underline hover:no-underline">https://www.deepl.com/your-account/keys</a>）选项卡中查找和管理您的 API 密钥。
-                    </p>
-                </div>
-                <div id="deepl-key-status" class="text-xs font-medium text-zinc-600"></div>
             </div>
-            <div class="mt-8 flex justify-end space-x-3">
-                <button id="deepl-cancel-btn" class="px-5 py-2.5 rounded-lg text-sm font-medium text-zinc-600 hover:bg-zinc-100 transition-colors">取消</button>
-                <button id="deepl-delete-btn" class="px-5 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">删除</button>
-                <button id="deepl-save-btn" class="btn bg-zinc-900 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-black shadow-lg shadow-zinc-200">保存</button>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button id="cancel-modal-btn" class="px-4 py-2 border border-[#E0E0E0] rounded-lg text-[#333333] hover:bg-[#F5F5F5]">取消</button>
+                <button id="confirm-add-btn" class="btn bg-[#333333] text-white px-4 py-2 rounded-lg">确认</button>
             </div>
         </div>
     </div>
 
-	<footer class="bg-white border-t border-zinc-200 py-6 text-center text-sm text-zinc-500 mt-auto">
-	    <p id="footer-api" class="text-xs text-zinc-800">
-            使用开源翻译 API（LibreTranslate）实现 
-        </p>
-        <p id="footer-made-by" class="mb-1">
-            由 
-            <a href="https://github.com/Ahhhh2016" class="text-zinc-400 hover:underline font-medium">Ahhhh2016</a> 制作，
-            希望这个小工具对你有帮助
-        </p>
-        <p id="busuanzi_container_site_pv" class="text-xs text-zinc-400 mt-2">
-            👀 已有 <span id="busuanzi_value_site_pv" class="font-mono">-</span> 位朋友访问了这个页面
-        </p>
+    <!-- DeepL Key 导入模态框 -->
+    <div id="deepl-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 class="text-lg font-medium mb-4">导入 DeepL API Key</h3>
+            <div class="space-y-3">
+                <div>
+                    <label for="deepl-key-input" class="block text-sm text-[#666666] mb-1">API Key</label>
+                    <input id="deepl-key-input" type="password" class="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#333333]" placeholder="请输入 DeepL API Key">
+                </div>
+                <div>
+                    <label for="deepl-plan-select" class="block text-sm text-[#666666] mb-1">计划 / Plan</label>
+                    <select id="deepl-plan-select" class="w-full border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:border-[#333333]">
+                        <option value="auto">自动判断（推荐）</option>
+                        <option value="free">Free（api-free.deepl.com）</option>
+                        <option value="pro">Pro（api.deepl.com）</option>
+                    </select>
+                </div>
+                <div class="text-xs text-[#666666] leading-5">
+                    <p id="deepl-tip-en" class="">
+                        You can find and manage your API keys in the “API Keys &amp; Limits” (<a href="https://www.deepl.com/your-account/keys" target="_blank" class="text-blue-600 hover:underline">https://www.deepl.com/your-account/keys</a>) tab when signed into your DeepL API account. The free plan has 500,000 character limit / month.
+                    </p>
+                    <p id="deepl-tip-zh" class="">
+                        登录 DeepL API 帐户后，您可以在“API 密钥和限制”（<a href="https://www.deepl.com/your-account/keys" target="_blank" class="text-blue-600 hover:underline">https://www.deepl.com/your-account/keys</a>）选项卡中查找和管理您的 API 密钥。免费套餐每月有 50 万字符的使用限制。
+                    </p>
+                </div>
+                <div id="deepl-key-status" class="text-xs text-[#666666] leading-5"></div>
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button id="deepl-cancel-btn" class="px-4 py-2 border border-[#E0E0E0] rounded-lg text-[#333333] hover:bg-[#F5F5F5]">取消</button>
+                <button id="deepl-delete-btn" class="px-4 py-2 border border-[#E0E0E0] rounded-lg text-[#CC0000] hover:bg-[#FFF5F5]">删除</button>
+                <button id="deepl-save-btn" class="btn bg-[#333333] text-white px-4 py-2 rounded-lg">保存</button>
+            </div>
+        </div>
+    </div>
+
+	<footer class="bg-white py-4 text-center text-sm text-[#666666] border-t border-[#E0E0E0]">
+	<p id="footer-made-by">
+        由 
+        <a href="https://github.com/Ahhhh2016" class="text-[#333333] hover:underline font-medium">Ahhhh2016</a> 制作，
+        希望这个小工具对你有帮助
+    </p>
+	<p id="footer-api">
+        使用开源翻译 API（LibreTranslate）实现 
+    </p>
+    <p id="busuanzi_container_site_pv" style="margin-top: 4px;">
+        👀 已有 <span id="busuanzi_value_site_pv">-</span> 位朋友访问了这个页面
+    </p>
     </footer>
 
     <script>
@@ -312,8 +262,7 @@
             const sourceLanguageSelect = document.getElementById('source-language');
             const targetLanguageSelect = document.getElementById('target-language');
 			const lgQuery = window.matchMedia('(min-width: 1024px)'); // 对应 Tailwind 的 lg 断点
-			
-            // ===== UI 多语言（i18n）支持 (保持原有逻辑) =====
+			// ===== UI 多语言（i18n）支持 =====
 			const UI_LANGS = ['zh', 'en'];
 			function detectDefaultUiLang() {
 				const saved = (localStorage.getItem('ui_lang') || '').toLowerCase();
@@ -355,9 +304,9 @@
 					ttsUnsupported: '当前浏览器不支持朗读功能',
 					sameLangError: '源语言和目标语言不能相同',
 					duplicateCardError: '已存在相同的翻译卡片（相同源语言与目标语言）',
-					footerMadeBy_html: '由 <a href="https://github.com/Ahhhh2016" class="text-zinc-900 hover:underline font-medium">Ahhhh2016</a> 制作， 希望这个小工具对你有帮助',
+					footerMadeBy_html: '由 <a href="https://github.com/Ahhhh2016" class="text-[#333333] hover:underline font-medium">Ahhhh2016</a> 制作， 希望这个小工具对你有帮助',
 					footerApi: '使用开源翻译 API（LibreTranslate）实现',
-					footerPV_html: '👀 已有 <span id="busuanzi_value_site_pv" class="font-mono">-</span> 位朋友访问了这个页面',
+					footerPV_html: '👀 已有 <span id="busuanzi_value_site_pv">-</span> 位朋友访问了这个页面',
 					deeplFooter_using: '正在使用DeepL API进行翻译',
 					deeplFooter_fallback: '未添加DeepL API，使用LibreTranslate API进行翻译',
 					langName_zh: '中文',
@@ -400,9 +349,9 @@
 					ttsUnsupported: 'Text-to-speech is not supported in this browser',
 					sameLangError: 'Source and target languages cannot be the same',
 					duplicateCardError: 'A translation card with the same source and target already exists',
-					footerMadeBy_html: 'Made by <a href="https://github.com/Ahhhh2016" class="text-zinc-900 hover:underline font-medium">Ahhhh2016</a>, hope this little tool helps you',
+					footerMadeBy_html: 'Made by <a href="https://github.com/Ahhhh2016" class="text-[#333333] hover:underline font-medium">Ahhhh2016</a>, hope this little tool helps you',
 					footerApi: 'Powered by the open-source LibreTranslate API',
-					footerPV_html: '👀 <span id="busuanzi_value_site_pv" class="font-mono">-</span> visits to this page',
+					footerPV_html: '👀 <span id="busuanzi_value_site_pv">-</span> visits to this page',
 					deeplFooter_using: 'Using DeepL API for translation',
 					deeplFooter_fallback: 'DeepL API not set, using LibreTranslate API for translation',
 					langName_zh: 'Chinese',
@@ -457,36 +406,38 @@
 					el.textContent = t('deeplFooter_fallback');
 					return;
 				}
+				// 判定当前是否具备使用 DeepL 的条件：有本地 Key 或后端可用且存在任一 Key
 				const deeplAvailable = !!getDeepLKey() || (backendReachable && (getDeepLKey() || backendHasServerKey));
 				el.textContent = deeplAvailable ? t('deeplFooter_using') : t('deeplFooter_fallback');
 			}
 			function applyI18nToStatic() {
+				// Document lang
 				document.documentElement.lang = currentUiLang === 'zh' ? 'zh-CN' : 'en';
+				// Header buttons
 				const importBtn = document.getElementById('import-deepl-btn');
 				const addBtn = document.getElementById('add-window-btn');
 				if (importBtn) importBtn.textContent = t('importDeepl');
 				if (addBtn) addBtn.textContent = t('add');
-				
-                const langModalTitle = document.querySelector('#language-modal h3');
-                const srcLabel = sourceLanguageSelect ? sourceLanguageSelect.parentElement.previousElementSibling : null;
-                const tgtLabel = targetLanguageSelect ? targetLanguageSelect.parentElement.previousElementSibling : null;
+				// Language modal
+			const langModalTitle = document.querySelector('#language-modal h3');
+			const srcLabel = sourceLanguageSelect ? sourceLanguageSelect.previousElementSibling : null;
+			const tgtLabel = targetLanguageSelect ? targetLanguageSelect.previousElementSibling : null;
 				if (langModalTitle) langModalTitle.textContent = t('addWindowTitle');
-                if (srcLabel && srcLabel.tagName === 'LABEL') srcLabel.textContent = t('sourceLangLabel');
-                if (tgtLabel && tgtLabel.tagName === 'LABEL') tgtLabel.textContent = t('targetLangLabel');
-                
+			if (srcLabel && srcLabel.tagName === 'LABEL') srcLabel.textContent = t('sourceLangLabel');
+			if (tgtLabel && tgtLabel.tagName === 'LABEL') tgtLabel.textContent = t('targetLangLabel');
 				const cancelBtn = document.getElementById('cancel-modal-btn');
 				const confirmBtn = document.getElementById('confirm-add-btn');
 				if (cancelBtn) cancelBtn.textContent = t('cancel');
 				if (confirmBtn) confirmBtn.textContent = t('confirm');
 				updateLangOptionsText();
-				
+				// DeepL modal
 				const deeplTitle = document.querySelector('#deepl-modal h3');
 				if (deeplTitle) deeplTitle.textContent = t('deeplModalTitle');
 				const keyLabel = document.querySelector('label[for="deepl-key-input"]');
 				const planLabel = document.querySelector('label[for="deepl-plan-select"]');
 				if (keyLabel) keyLabel.textContent = t('apiKeyLabel');
 				if (planLabel) planLabel.textContent = t('planLabel');
-                if (deeplKeyInput) deeplKeyInput.placeholder = t('deeplKeyPlaceholder');
+			if (deeplKeyInput) deeplKeyInput.placeholder = t('deeplKeyPlaceholder');
 				if (deeplPlanSelect && deeplPlanSelect.options && deeplPlanSelect.options.length >= 3) {
 					deeplPlanSelect.options[0].textContent = t('planAuto');
 					deeplPlanSelect.options[1].textContent = t('planFree');
@@ -498,18 +449,19 @@
 				if (dCancel) dCancel.textContent = t('cancel');
 				if (dDelete) dDelete.textContent = t('delete');
 				if (dSave) dSave.textContent = t('save');
-				
+				// Footer
 				const footerMadeBy = document.getElementById('footer-made-by');
 				const footerApi = document.getElementById('footer-api');
 				const footerPv = document.getElementById('busuanzi_container_site_pv');
 				if (footerMadeBy) footerMadeBy.innerHTML = t('footerMadeBy_html');
 				if (footerApi) footerApi.textContent = t('footerApi');
 				if (footerPv) footerPv.innerHTML = t('footerPV_html');
+				// Update DeepL tips visibility
 				applyDeeplTipsLang();
+				// 动态更新页脚 API 状态
 				updateFooterApiStatus();
 			}
-
-            // 后端配置与可用性探测 (保持不变)
+            // 后端配置与可用性探测
             const BACKEND_URL = (localStorage.getItem('backend_url') || 'http://localhost:3001').replace(/\/+$/, '');
             let backendReachable = false;
             let backendHasServerKey = false;
@@ -521,25 +473,46 @@
                         backendReachable = true;
                         backendHasServerKey = Boolean(j && j.deeplKeyConfigured);
                     }
-                } catch (_) { }
+                } catch (_) {
+                    // 后端不可用时保持为 false，继续走前端直连与公共实例逻辑
+                }
+				// 探测结束后刷新页脚状态
 				updateFooterApiStatus();
             })();
 
             // DeepL Key: 获取/保存
-            function getDeepLKey() { return localStorage.getItem('deepl_api_key') || ''; }
-            function setDeepLKey(key) {
-                if (!key) localStorage.removeItem('deepl_api_key');
-                else localStorage.setItem('deepl_api_key', key);
+            function getDeepLKey() {
+                return localStorage.getItem('deepl_api_key') || '';
             }
-            function getDeepLPlan() { return localStorage.getItem('deepl_api_plan') || 'auto'; }
+            function setDeepLKey(key) {
+                if (!key) {
+                    localStorage.removeItem('deepl_api_key');
+                } else {
+                    localStorage.setItem('deepl_api_key', key);
+                }
+            }
+            function getDeepLPlan() {
+                return localStorage.getItem('deepl_api_plan') || 'auto';
+            }
             function setDeepLPlan(plan) {
-                if (!plan) localStorage.removeItem('deepl_api_plan');
-                else localStorage.setItem('deepl_api_plan', plan);
+                if (!plan) {
+                    localStorage.removeItem('deepl_api_plan');
+                } else {
+                    localStorage.setItem('deepl_api_plan', plan);
+                }
             }
             function showDeeplModal() {
+                // 不回显已有 key，避免肩窥
                 deeplKeyInput.value = '';
-				if (deeplKeyInput) deeplKeyInput.placeholder = t('deeplKeyPlaceholder');
-                if (deeplPlanSelect) deeplPlanSelect.value = getDeepLPlan();
+				// 根据当前 UI 语言设置占位
+				if (deeplKeyInput) {
+					deeplKeyInput.placeholder = t('deeplKeyPlaceholder');
+				}
+                // 回显计划
+                if (deeplPlanSelect) {
+                    deeplPlanSelect.value = getDeepLPlan();
+                }
+                // 显示当前 Key 状态，并配置删除按钮可用性
 				if (deeplKeyStatus) {
 					const hasKey = !!getDeepLKey();
 					deeplKeyStatus.textContent = hasKey ? t('deeplKeyStatusHas') : t('deeplKeyStatusNone');
@@ -547,16 +520,26 @@
                 if (deeplDeleteBtn) {
                     const hasKey = !!getDeepLKey();
                     deeplDeleteBtn.disabled = !hasKey;
-                    if (hasKey) deeplDeleteBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                    else deeplDeleteBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    if (hasKey) {
+                        deeplDeleteBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    } else {
+                        deeplDeleteBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
                 }
                 deeplModal.classList.remove('hidden');
             }
-            function hideDeeplModal() { deeplModal.classList.add('hidden'); }
+            function hideDeeplModal() {
+                deeplModal.classList.add('hidden');
+            }
+			// 根据 UI 语言显示提示
 			applyDeeplTipsLang();
-            
-            if (importDeeplBtn) importDeeplBtn.addEventListener('click', showDeeplModal);
-            if (deeplCancelBtn) deeplCancelBtn.addEventListener('click', hideDeeplModal);
+            // 绑定导入按钮与模态框
+            if (importDeeplBtn) {
+                importDeeplBtn.addEventListener('click', showDeeplModal);
+            }
+            if (deeplCancelBtn) {
+                deeplCancelBtn.addEventListener('click', hideDeeplModal);
+            }
             if (deeplSaveBtn) {
                 deeplSaveBtn.addEventListener('click', () => {
                     const prev = getDeepLKey();
@@ -565,9 +548,13 @@
                     setDeepLKey(key);
                     setDeepLPlan(plan);
                     let msg = '';
-                    if (!key) msg = t('deeplKeyCleared');
-                    else if (prev) msg = t('deeplKeyUpdated');
-                    else msg = t('deeplKeySaved');
+                    if (!key) {
+                        msg = t('deeplKeyCleared');
+                    } else if (prev) {
+                        msg = t('deeplKeyUpdated');
+                    } else {
+                        msg = t('deeplKeySaved');
+                    }
                     alert(msg);
                     hideDeeplModal();
 					updateFooterApiStatus();
@@ -575,7 +562,10 @@
             }
             if (deeplDeleteBtn) {
                 deeplDeleteBtn.addEventListener('click', () => {
-                    if (!getDeepLKey()) { alert(t('deeplNoKey')); return; }
+                    if (!getDeepLKey()) {
+                        alert(t('deeplNoKey'));
+                        return;
+                    }
                     const ok = confirm(t('deeplDeleteConfirm'));
                     if (!ok) return;
                     setDeepLKey('');
@@ -584,23 +574,27 @@
 					updateFooterApiStatus();
                 });
             }
+            // 点击模态框外部关闭
             if (deeplModal) {
                 deeplModal.addEventListener('click', function(e) {
                     if (e.target === deeplModal) hideDeeplModal();
                 });
             }
 
-            // Masonry 布局 (保持不变)
+            // Masonry 布局：在大屏幕使用双列容器，新增卡片放入高度较小的一列
             function getColumnWrappers() {
                 const col1 = translationContainer.querySelector('[data-column="1"]');
                 const col2 = translationContainer.querySelector('[data-column="2"]');
                 return [col1, col2];
             }
+
             function ensureColumnWrappers() {
                 let [col1, col2] = getColumnWrappers();
                 if (!col1 || !col2) {
+                    // 将已有卡片提取出来，稍后再按高度/跨度分配
                     const existingCards = Array.from(translationContainer.querySelectorAll(':scope > .translation-window'));
                     translationContainer.innerHTML = '';
+                    // 创建两列
                     col1 = document.createElement('div');
                     col1.dataset.column = '1';
                     col1.className = 'flex flex-col gap-6';
@@ -609,6 +603,7 @@
                     col2.className = 'flex flex-col gap-6';
                     translationContainer.appendChild(col1);
                     translationContainer.appendChild(col2);
+                    // 重新分配已存在的卡片（span 2 的直接放在容器中跨两列，其余进较短列）
                     existingCards.forEach(card => {
                         if ((card.dataset.span || '1') === '2') {
                             translationContainer.appendChild(card);
@@ -622,20 +617,25 @@
                     });
                 }
             }
+
             function teardownColumnWrappers() {
                 const [col1, col2] = getColumnWrappers();
                 if (!col1 || !col2) return;
                 const allCards = [...col1.children, ...col2.children];
+                // 清空容器并放回所有卡片
                 translationContainer.innerHTML = '';
                 allCards.forEach(card => translationContainer.appendChild(card));
             }
+
             function measureColumnHeight(columnEl) {
+                // 使用 getBoundingClientRect 累加子元素高度，避免布局异步问题
                 let total = 0;
                 Array.from(columnEl.children).forEach(child => {
                     total += child.getBoundingClientRect().height;
                 });
                 return total;
             }
+
             function appendCardResponsive(card) {
                 if (lgQuery.matches) {
                     ensureColumnWrappers();
@@ -650,9 +650,11 @@
                         targetCol.appendChild(card);
                     }
                 } else {
+                    // 小屏幕：单列，直接追加
                     translationContainer.appendChild(card);
                 }
             }
+
             function moveCardToFullWidth(card) {
                 if (!lgQuery.matches) return;
                 ensureColumnWrappers();
@@ -660,32 +662,55 @@
                 translationContainer.appendChild(card);
                 card.style.gridColumn = '1 / -1';
             }
+
             function moveCardToColumns(card) {
                 if (!lgQuery.matches) return;
                 ensureColumnWrappers();
                 card.dataset.span = '1';
                 card.style.gridColumn = '';
+                // 放入较短列
                 const [col1, col2] = getColumnWrappers();
                 const h1 = measureColumnHeight(col1);
                 const h2 = measureColumnHeight(col2);
                 const targetCol = h1 <= h2 ? col1 : col2;
                 targetCol.appendChild(card);
             }
-            function applyResponsiveLayout() {
-                if (lgQuery.matches) ensureColumnWrappers();
-                else teardownColumnWrappers();
-            }
-            if (lgQuery.addEventListener) lgQuery.addEventListener('change', applyResponsiveLayout);
-            else if (lgQuery.addListener) lgQuery.addListener(applyResponsiveLayout);
 
-            // API 交互逻辑 (DeepL & LibreTranslate)
+            function applyResponsiveLayout() {
+                if (lgQuery.matches) {
+                    ensureColumnWrappers();
+                } else {
+                    teardownColumnWrappers();
+                }
+            }
+            // 监听断点变化
+            if (lgQuery.addEventListener) {
+                lgQuery.addEventListener('change', applyResponsiveLayout);
+            } else if (lgQuery.addListener) {
+                // 兼容旧浏览器
+                lgQuery.addListener(applyResponsiveLayout);
+            }
+
+            // DeepL 语言映射
             function mapAppLangToDeepL(appLang) {
-                const map = { zh: 'ZH', en: 'EN', ja: 'JA', ko: 'KO', fr: 'FR', de: 'DE' };
+                const map = {
+                    zh: 'ZH', // DeepL 简体中文
+                    en: 'EN',
+                    ja: 'JA',
+                    ko: 'KO',
+                    fr: 'FR',
+                    de: 'DE',
+                };
                 return map[appLang] || (appLang ? appLang.toUpperCase() : '');
             }
+            // 使用后端代理 DeepL（优先，若可用）
             async function translateViaBackend(text, sourceLang, targetLang) {
-                const apiKey = getDeepLKey();
-                const body = { text, targetLang, sourceLang };
+                const apiKey = getDeepLKey(); // 可选（若用户提供则透传；否则由服务端 .env 提供）
+                const body = {
+                    text,
+                    targetLang,
+                    sourceLang
+                };
                 if (apiKey) body.apiKey = apiKey;
                 const resp = await fetch(BACKEND_URL + '/api/translate', {
                     method: 'POST',
@@ -693,25 +718,44 @@
                     body: JSON.stringify(body),
                     mode: 'cors'
                 });
-                if (!resp.ok) throw new Error('backend error ' + resp.status);
+
+                console.log(resp);
+
+                if (!resp.ok) {
+                    const textErr = await resp.text().catch(() => '');
+                    throw new Error('backend error ' + resp.status + ': ' + textErr);
+                }
                 const data = await resp.json();
-                if (!data || data.ok !== true) throw new Error('backend response invalid');
+                if (!data || data.ok !== true) {
+                    throw new Error('backend response invalid');
+                }
+                // 后端当前仅代理 DeepL
+                console.log('[translate] Using Backend → DeepL', {
+                    backend: BACKEND_URL,
+                    serverHasKey: backendHasServerKey,
+                    usedClientApiKey: Boolean(apiKey)
+                });
 				updateFooterApiStatus('deepl');
                 return data.resultText || (data.translations && data.translations[0] && data.translations[0].text) || '';
             }
+            // 使用 DeepL 翻译（若存在用户的 API Key）
             async function translateWithDeepL(text, sourceLang, targetLang) {
                 const apiKey = getDeepLKey();
                 if (!apiKey) throw new Error('No DeepL API key');
+                // 端点选择（根据计划或自动判断）
                 const plan = getDeepLPlan();
                 let endpoints = [];
-                if (plan === 'free') endpoints = ['https://api-free.deepl.com/v2/translate'];
-                else if (plan === 'pro') endpoints = ['https://api.deepl.com/v2/translate'];
-                else {
-                    const looksFree = apiKey.includes(':fx');
+                if (plan === 'free') {
+                    endpoints = ['https://api-free.deepl.com/v2/translate'];
+                } else if (plan === 'pro') {
+                    endpoints = ['https://api.deepl.com/v2/translate'];
+                } else {
+                    const looksFree = apiKey.includes(':fx'); // 常见 free key 特征
                     endpoints = looksFree
                         ? ['https://api-free.deepl.com/v2/translate', 'https://api.deepl.com/v2/translate']
                         : ['https://api.deepl.com/v2/translate', 'https://api-free.deepl.com/v2/translate'];
                 }
+                // 使用 x-www-form-urlencoded，避免 Authorization 自定义头触发预检
                 const params = new URLSearchParams();
                 params.set('auth_key', apiKey);
                 params.set('text', text);
@@ -722,72 +766,139 @@
                     const src = mapAppLangToDeepL(sourceLang);
                     if (src) params.set('source_lang', src);
                 }
-                let resp, data, lastErr = null;
+                let resp, data;
+                let lastErr = null;
+                let endpointUsed = '';
                 for (const endpoint of endpoints) {
                     try {
                         resp = await fetch(endpoint, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                                'Accept': 'application/json',
+                            },
                             body: params.toString(),
                             mode: 'cors',
                         });
                         if (!resp.ok) {
-                            lastErr = new Error(`DeepL error ${resp.status}`);
+                            const errText = await resp.text().catch(() => '');
+                            lastErr = new Error(`DeepL error ${resp.status}: ${errText}`);
                             continue;
                         }
                         data = await resp.json();
+                        endpointUsed = endpoint;
                         break;
-                    } catch (e) { lastErr = e; continue; }
+                    } catch (e) {
+                        lastErr = e;
+                        continue;
+                    }
                 }
                 if (!data) throw lastErr || new Error('DeepL request failed');
+                if (endpointUsed) {
+                    console.log('[translate] Using DeepL (direct)', { endpoint: endpointUsed });
+                }
 				updateFooterApiStatus('deepl');
                 return data?.translations?.[0]?.text ?? '';
             }
+            // 1. 异步翻译函数 —— 优先使用 DeepL（若用户提供 Key），否则回退 LibreTranslate
             async function translateText(text, sourceLang, targetLang) {
                 if (!text.trim()) return '';
+
+                // 优先尝试后端（若可用；当用户提供了 Key 或服务端已配置 Key 都可用）
                 try {
                     if (backendReachable && (getDeepLKey() || backendHasServerKey)) {
                         return await translateViaBackend(text, sourceLang, targetLang);
                     }
-                } catch (e) {}
+                } catch (e) {
+                    console.error('backend translate error:', e);
+                    // 失败则继续后续策略
+                }
+
+                // 优先尝试 DeepL（仅当用户已设置 API Key）
                 const deeplKey = getDeepLKey();
                 if (deeplKey) {
-                    try { return await translateWithDeepL(text, sourceLang, targetLang); }
-                    catch (e) {}
+                    try {
+                        return await translateWithDeepL(text, sourceLang, targetLang);
+                    } catch (e) {
+                        console.error('DeepL translate error:', e);
+                        // 失败则继续回退 LibreTranslate
+                    }
                 }
+
                 try {
-                    const endpoints = ['https://translate.terraprint.co/translate', 'https://translate.fedilab.app/translate'];
-                    let resp, usedLT = '';
+                    // 可用的 LibreTranslate 公共实例（按优先级从高到低）
+                    const endpoints = [
+                        'https://translate.terraprint.co/translate',   // ✅ 免 API Key、支持 CORS
+                        'https://translate.fedilab.app/translate',     // ✅ 免 Key
+                    ];
+
+                    // 依次尝试，直到有实例返回成功
+                    let resp;
+                    let usedLT = '';
                     for (const API of endpoints) {
                         try {
                             resp = await fetch(API, {
-                                method: 'POST', mode: 'cors',
+                                method: 'POST',
+                                mode: 'cors',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ q: text, source: sourceLang, target: targetLang, format: 'text' })
+                                body: JSON.stringify({
+                                    q: text,
+                                    source: sourceLang,
+                                    target: targetLang,
+                                    format: 'text'
+                                })
                             });
-                            if (resp.ok) { usedLT = API; break; }
-                        } catch (_) {}
+                            if (resp.ok) {
+                                usedLT = API;
+                                break;   // 成功就跳出循环
+                            }
+                        } catch (_) {
+                            // 忽略当前实例的网络错误，尝试下一个
+                        }
                     }
+
                     if (!resp || !resp.ok) throw new Error('all endpoints failed');
                     const data = await resp.json();
+                    if (usedLT) {
+                        console.log('[translate] Using LibreTranslate', { endpoint: usedLT });
+                    }
 					updateFooterApiStatus('libre');
-                    return data.translatedText;
+                    return data.translatedText;          // LibreTranslate 的返回字段
                 } catch (err) {
+					console.error('translate error:', err);
 					return t('translateFailed');
                 }
             }
 
-            // Web Speech API
-            const isSpeechSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
+            // Web Speech API（朗读）支持
+            const isSpeechSupported = typeof window !== 'undefined'
+                && 'speechSynthesis' in window
+                && 'SpeechSynthesisUtterance' in window;
             let cachedVoices = [];
-            function refreshVoices() { try { cachedVoices = window.speechSynthesis.getVoices() || []; } catch (_) { cachedVoices = []; } }
+            function refreshVoices() {
+                try {
+                    cachedVoices = window.speechSynthesis.getVoices() || [];
+                } catch (_) {
+                    cachedVoices = [];
+                }
+            }
             if (isSpeechSupported) {
                 refreshVoices();
-                if (window.speechSynthesis.addEventListener) window.speechSynthesis.addEventListener('voiceschanged', refreshVoices);
-                else window.speechSynthesis.onvoiceschanged = refreshVoices;
+                if (typeof window.speechSynthesis.addEventListener === 'function') {
+                    window.speechSynthesis.addEventListener('voiceschanged', refreshVoices);
+                } else {
+                    window.speechSynthesis.onvoiceschanged = refreshVoices;
+                }
             }
             function mapAppLangToBCP47(appLang) {
-                const map = { zh: 'zh-CN', en: 'en-US', ja: 'ja-JP', ko: 'ko-KR', fr: 'fr-FR', de: 'de-DE' };
+                const map = {
+                    zh: 'zh-CN',
+                    en: 'en-US',
+                    ja: 'ja-JP',
+                    ko: 'ko-KR',
+                    fr: 'fr-FR',
+                    de: 'de-DE',
+                };
                 return map[appLang] || (appLang || 'en');
             }
             function pickVoiceForLang(appLang) {
@@ -799,6 +910,7 @@
                     return lang === targetTag || lang.startsWith(targetTag.split('-')[0] + '-');
                 });
                 if (!matches.length) return null;
+                // 轻度偏好：优先 Google，其次 Microsoft，其次任意
                 const google = matches.find(v => /google/i.test(v.name));
                 if (google) return google;
                 const ms = matches.find(v => /microsoft/i.test(v.name));
@@ -813,23 +925,27 @@
                 if (speaking) {
                     icon.classList.remove('fa-volume-high');
                     icon.classList.add('fa-stop');
-                    button.classList.add('text-zinc-900');
                 } else {
                     icon.classList.remove('fa-stop');
                     icon.classList.add('fa-volume-high');
-                    button.classList.remove('text-zinc-900');
                 }
             }
             function stopSpeaking() {
-                if (isSpeechSupported) { try { window.speechSynthesis.cancel(); } catch (_) {} }
+                if (isSpeechSupported) {
+                    try { window.speechSynthesis.cancel(); } catch (_) {}
+                }
                 if (speakingState.button) setSpeakingVisual(speakingState.button, false);
                 speakingState.utterance = null;
                 speakingState.button = null;
             }
             function speakText(text, appLang, button) {
-                if (!isSpeechSupported) { alert(t('ttsUnsupported')); return; }
+                if (!isSpeechSupported) {
+					alert(t('ttsUnsupported'));
+                    return;
+                }
                 const content = (text || '').toString().trim();
                 if (!content) return;
+                // 若正在朗读，先停止；重复点击同一按钮则视为停止
                 if (window.speechSynthesis.speaking) {
                     const wasSameButton = speakingState.button === button;
                     stopSpeaking();
@@ -839,105 +955,210 @@
                 utter.lang = mapAppLangToBCP47(appLang);
                 const v = pickVoiceForLang(appLang);
                 if (v) utter.voice = v;
+                utter.rate = 1;
+                utter.pitch = 1;
                 utter.onstart = () => setSpeakingVisual(button, true);
-                utter.onend = () => { if (speakingState.button === button) setSpeakingVisual(button, false); };
-                utter.onerror = () => { if (speakingState.button === button) setSpeakingVisual(button, false); };
+                utter.onend = () => {
+                    if (speakingState.button === button) setSpeakingVisual(button, false);
+                    speakingState.utterance = null;
+                    speakingState.button = null;
+                };
+                utter.onerror = () => {
+                    if (speakingState.button === button) setSpeakingVisual(button, false);
+                    speakingState.utterance = null;
+                    speakingState.button = null;
+                };
                 speakingState.utterance = utter;
                 speakingState.button = button;
-                try { window.speechSynthesis.speak(utter); } catch (e) { setSpeakingVisual(button, false); }
+                try {
+                    window.speechSynthesis.speak(utter);
+                } catch (e) {
+                    setSpeakingVisual(button, false);
+                }
             }
 
-            // 拖拽排序逻辑 (保持不变)
+            // 拖拽排序：通过标题栏拖动卡片在同一父容器内重排（小屏：在主容器；大屏：在所在列内）
             function setupDragReorder(card) {
                 const header = card.querySelector('.card-title');
                 if (!header) return;
-                let isDragging = false, placeholder = null, startOffsetX = 0, startOffsetY = 0, originParent = null, lastParent = null;
-                
+                let isDragging = false;
+                let placeholder = null;
+                let startOffsetX = 0;
+                let startOffsetY = 0;
+                let originParent = null;
+                let lastParent = null;
+                let lastZone = null; // 'column' | 'full' | 'single'
+
                 function candidateSiblings(parentEl) {
-                    return Array.from(parentEl.children).filter(el => el !== card && el !== placeholder && el.classList && el.classList.contains('translation-window'));
+                    return Array.from(parentEl.children).filter(el =>
+                        el !== card &&
+                        el !== placeholder &&
+                        el.classList &&
+                        el.classList.contains('translation-window')
+                    );
                 }
+
                 function findBeforeEl(parentEl, clientY) {
                     const siblings = candidateSiblings(parentEl);
                     for (const el of siblings) {
                         const r = el.getBoundingClientRect();
-                        if (clientY < r.top + r.height / 2) return el;
+                        const midY = r.top + r.height / 2;
+                        if (clientY < midY) return el;
                     }
                     return null;
                 }
+
                 function findBeforeFullWidth(clientY) {
+                    // 仅考虑 full-width 卡片，按垂直顺序插入；若比列容器还靠上，则插在列容器之前（置顶）
                     const [col1, col2] = getColumnWrappers();
-                    const r1 = col1?.getBoundingClientRect(), r2 = col2?.getBoundingClientRect();
-                    const topBoundary = Math.min(r1 ? r1.top : Infinity, r2 ? r2.top : Infinity);
-                    if (clientY < topBoundary && (col1 || col2)) return col1 || col2 || translationContainer.firstChild;
-                    const fullCards = Array.from(translationContainer.querySelectorAll(':scope > .translation-window[data-span="2"]')).filter(el => el !== card && el !== placeholder);
+                    const r1 = col1?.getBoundingClientRect();
+                    const r2 = col2?.getBoundingClientRect();
+                    const topBoundary = Math.min(
+                        r1 ? r1.top : Number.POSITIVE_INFINITY,
+                        r2 ? r2.top : Number.POSITIVE_INFINITY
+                    );
+                    if (clientY < topBoundary && (col1 || col2)) {
+                        // 放在容器最前（列容器之前），实现“置顶”
+                        return col1 || col2 || translationContainer.firstChild;
+                    }
+                    const fullCards = Array.from(
+                        translationContainer.querySelectorAll(':scope > .translation-window[data-span="2"]')
+                    ).filter(el => el !== card && el !== placeholder);
                     for (const el of fullCards) {
                         const r = el.getBoundingClientRect();
-                        if (clientY < r.top + r.height / 2) return el;
+                        const midY = r.top + r.height / 2;
+                        if (clientY < midY) return el;
                     }
                     return null;
                 }
+
                 function onPointerMove(e) {
                     if (!isDragging) return;
-                    card.style.left = (e.clientX - startOffsetX) + 'px';
-                    card.style.top = (e.clientY - startOffsetY) + 'px';
-                    let targetParent = lastParent || originParent, zone = 'single';
+                    // 跟随指针
+                    const x = e.clientX - startOffsetX;
+                    const y = e.clientY - startOffsetY;
+                    card.style.left = x + 'px';
+                    card.style.top = y + 'px';
+
+                    // 目标父容器与区域类型判断
+                    let targetParent = lastParent || originParent;
+                    let zone = 'single';
                     if (lgQuery.matches) {
+                        // 确保列容器存在
                         ensureColumnWrappers();
                         const [col1, col2] = getColumnWrappers();
-                        const r1 = col1?.getBoundingClientRect(), r2 = col2?.getBoundingClientRect();
-                        if (r1 && e.clientX >= r1.left && e.clientX <= r1.right) { targetParent = col1; zone = 'column'; }
-                        else if (r2 && e.clientX >= r2.left && e.clientX <= r2.right) { targetParent = col2; zone = 'column'; }
-                        else { targetParent = translationContainer; zone = 'full'; }
+                        const r1 = col1?.getBoundingClientRect();
+                        const r2 = col2?.getBoundingClientRect();
+                        if (r1 && e.clientX >= r1.left && e.clientX <= r1.right) {
+                            targetParent = col1;
+                            zone = 'column';
+                        } else if (r2 && e.clientX >= r2.left && e.clientX <= r2.right) {
+                            targetParent = col2;
+                            zone = 'column';
+                        } else {
+                            targetParent = translationContainer;
+                            zone = 'full';
+                        }
                     }
-                    if (targetParent !== placeholder.parentElement) targetParent.appendChild(placeholder);
+
+                    // 切换占位父容器与样式
+                    if (targetParent !== placeholder.parentElement) {
+                        targetParent.appendChild(placeholder);
+                    }
                     lastParent = targetParent;
-                    if (zone === 'full' && lgQuery.matches) placeholder.style.gridColumn = '1 / -1';
-                    else placeholder.style.gridColumn = '';
-                    
+                    lastZone = zone;
+                    if (zone === 'full' && lgQuery.matches) {
+                        placeholder.style.gridColumn = '1 / -1';
+                    } else {
+                        placeholder.style.gridColumn = '';
+                    }
+
+                    // 在目标内选择插入位置
                     if (zone === 'full' && lgQuery.matches) {
                         const beforeFW = findBeforeFullWidth(e.clientY);
-                        if (beforeFW) translationContainer.insertBefore(placeholder, beforeFW);
-                        else translationContainer.appendChild(placeholder);
+                        if (beforeFW) {
+                            translationContainer.insertBefore(placeholder, beforeFW);
+                        } else {
+                            translationContainer.appendChild(placeholder);
+                        }
                     } else {
                         const beforeEl = findBeforeEl(targetParent, e.clientY);
-                        if (beforeEl) targetParent.insertBefore(placeholder, beforeEl);
-                        else targetParent.appendChild(placeholder);
+                        if (beforeEl) {
+                            targetParent.insertBefore(placeholder, beforeEl);
+                        } else {
+                            targetParent.appendChild(placeholder);
+                        }
                     }
                 }
-                function onPointerUp() {
-                    if (!isDragging) return;
-                    if (placeholder && placeholder.parentElement) {
-                        const parent = placeholder.parentElement;
-                        const dropInFullZone = lgQuery.matches && parent === translationContainer;
-                        if (dropInFullZone) { card.dataset.span = '2'; card.style.gridColumn = '1 / -1'; }
-                        else if (lgQuery.matches) { card.dataset.span = '1'; card.style.gridColumn = ''; }
-                        parent.insertBefore(card, placeholder);
-                        parent.removeChild(placeholder);
-                    }
-                    placeholder = null; isDragging = false;
+
+                function cleanupDrag() {
+                    isDragging = false;
                     document.removeEventListener('pointermove', onPointerMove);
                     document.removeEventListener('pointerup', onPointerUp);
                     document.removeEventListener('pointercancel', onPointerUp);
                     document.body.style.userSelect = '';
+                    // 还原卡片样式
                     card.classList.remove('dragging');
-                    card.style.position = ''; card.style.zIndex = ''; card.style.width = ''; card.style.left = ''; card.style.top = '';
+                    card.style.position = '';
+                    card.style.zIndex = '';
+                    card.style.width = '';
+                    card.style.left = '';
+                    card.style.top = '';
+                }
+
+                function onPointerUp() {
+                    if (!isDragging) return;
+                    // 放置卡片并根据区域设置 span
+                    if (placeholder && placeholder.parentElement) {
+                        const parent = placeholder.parentElement;
+                        const dropInFullZone = lgQuery.matches && parent === translationContainer;
+                        if (dropInFullZone) {
+                            card.dataset.span = '2';
+                            card.style.gridColumn = '1 / -1';
+                            parent.insertBefore(card, placeholder);
+                        } else {
+                            // 列内或小屏
+                            if (lgQuery.matches) {
+                                card.dataset.span = '1';
+                                card.style.gridColumn = '';
+                            }
+                            parent.insertBefore(card, placeholder);
+                        }
+                        parent.removeChild(placeholder);
+                    }
+                    placeholder = null;
+                    cleanupDrag();
                     saveCurrentWindows();
                 }
+
                 header.addEventListener('pointerdown', (e) => {
+                    // 只响应主按钮
                     if (e.button !== 0) return;
                     e.preventDefault();
-                    if (lgQuery.matches) ensureColumnWrappers();
+                    if (lgQuery.matches) {
+                        ensureColumnWrappers();
+                    }
                     const rect = card.getBoundingClientRect();
                     startOffsetX = e.clientX - rect.left;
                     startOffsetY = e.clientY - rect.top;
+                    // 创建占位元素
                     placeholder = document.createElement('div');
                     placeholder.className = 'drop-placeholder';
                     placeholder.style.height = rect.height + 'px';
-                    originParent = card.parentElement; lastParent = originParent;
+                    placeholder.style.borderRadius = getComputedStyle(card).borderRadius;
+                    originParent = card.parentElement;
+                    lastParent = originParent;
                     originParent.insertBefore(placeholder, card.nextSibling);
+
+                    // 固定卡片到视口层，随指针移动
                     card.classList.add('dragging');
-                    card.style.position = 'fixed'; card.style.zIndex = '9999';
-                    card.style.width = rect.width + 'px'; card.style.left = rect.left + 'px'; card.style.top = rect.top + 'px';
+                    card.style.position = 'fixed';
+                    card.style.zIndex = '9999';
+                    card.style.width = rect.width + 'px';
+                    card.style.left = rect.left + 'px';
+                    card.style.top = rect.top + 'px';
+
+                    // 捕获并监听移动/结束
                     isDragging = true;
                     document.body.style.userSelect = 'none';
                     document.addEventListener('pointermove', onPointerMove);
@@ -950,9 +1171,9 @@
 			function createTranslationWindow(source, target) {
                 const windowId = `window-${Date.now()}`;
                 const card = document.createElement('div');
-                // 优化后的卡片类名
-                card.className = 'translation-window rounded-xl overflow-hidden fade-in relative';
+                card.className = 'translation-window bg-white rounded-lg border border-[#E0E0E0] overflow-hidden fade-in relative';
                 card.id = windowId;
+                // 元数据用于持久化
                 card.dataset.source = source;
                 card.dataset.target = target;
 				const sourceName = getLanguageDisplayName(source);
@@ -961,45 +1182,45 @@
 				card.dataset.targetName = targetName;
                 card.dataset.span = '1';
                 
-                // 优化内部 HTML 结构和样式
                 card.innerHTML = `
-                    <div class="card-title drag-handle bg-zinc-50 border-b border-zinc-100 py-3 px-5 flex justify-between items-center h-12">
-                        <div class="text-sm font-semibold text-zinc-700">
-                            ${sourceName} <span class="text-zinc-400 mx-1">→</span> ${targetName}
+                    <div class="card-title drag-handle bg-[#F5F5F5] py-2 px-4 flex justify-between items-center h-10">
+                        <div class="text-sm text-[#333333]">
+                            ${sourceName} → ${targetName}
                         </div>
-                        <button class="delete-btn text-zinc-400 hover:text-red-500 transition-colors">
+                        <button class="delete-btn text-[#666666] hover:text-[#333333]">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-zinc-100">
-                        <div class="p-0 relative group">
-							<textarea class="input-box w-full h-48 p-5 resize-none pr-12 focus:bg-zinc-50 transition-colors" 
+                    <div class="grid grid-cols-1 md:grid-cols-2">
+                        <div class="p-4 border-r border-[#E0E0E0] relative">
+							<textarea class="input-box w-full h-40 p-3 bg-white resize-none rounded-lg pr-10" 
 									  placeholder="${t('inputPlaceholder', { sourceName })}" 
                                       data-source="${source}"></textarea>
-							<button class="speak-source-btn absolute bottom-3 right-3 text-zinc-400 hover:text-zinc-900 transition-colors p-2 rounded-lg hover:bg-zinc-100" title="${t('speak')}">
+							<button class="speak-source-btn absolute bottom-6 right-7 text-[#666666] hover:text-[#333333]" title="${t('speak')}">
                                 <i class="fa-solid fa-volume-high"></i>
                             </button>
                         </div>
-                        <div class="p-0 relative bg-zinc-50/50">
-                            <div class="relative w-full h-48" data-result-wrapper="true">
-                                <div class="w-full h-full p-5 overflow-auto pr-12 text-zinc-800 leading-relaxed" data-target="${target}"></div>
-								<div class="absolute bottom-2 right-2 flex space-x-1">
-                                    <button class="speak-target-btn text-zinc-400 hover:text-zinc-900 transition-colors p-2 rounded-lg hover:bg-white hover:shadow-sm" title="${t('speak')}">
-                                        <i class="fa-solid fa-volume-high"></i>
-                                    </button>
-                                    <button class="copy-btn text-zinc-400 hover:text-zinc-900 transition-colors p-2 rounded-lg hover:bg-white hover:shadow-sm" title="${t('copy')}">
-                                        <i class="fa-regular fa-copy"></i>
-                                    </button>
-                                </div>
+                        <div class="p-4">
+                            <div class="relative w-full h-40" data-result-wrapper="true">
+                                <div class="w-full h-full p-3 bg-[#F9F9F9] overflow-auto rounded-lg pr-10" data-target="${target}"></div>
+								<button class="speak-target-btn absolute bottom-1 right-9 text-[#666666] hover:text-[#333333]" title="${t('speak')}">
+                                    <i class="fa-solid fa-volume-high"></i>
+                                </button>
+								<button class="copy-btn absolute bottom-1 right-3 text-[#666666] hover:text-[#333333]" title="${t('copy')}">
+                                    <i class="fa-regular fa-copy"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
 					<div class="resize-handle" title="${t('resize')}"></div>
                 `;
                 
+                // 添加到容器
                 appendCardResponsive(card);
+                // 保存当前状态
                 saveCurrentWindows();
                 
+                // 绑定事件
                 const textarea = card.querySelector('textarea');
                 const resultDiv = card.querySelector('div[data-target]');
                 const deleteBtn = card.querySelector('.delete-btn');
@@ -1008,16 +1229,24 @@
                 const speakTargetBtn = card.querySelector('.speak-target-btn');
                 
                 let timeoutId;
+                
+                // 自动翻译
                 textarea.addEventListener('input', async () => {
                     clearTimeout(timeoutId);
                     timeoutId = setTimeout(async () => {
                         const text = textarea.value;
-                        if (isSpeechSupported && window.speechSynthesis.speaking) stopSpeaking();
+                        // 输入变化时，如在朗读，停止
+                        if (isSpeechSupported && window.speechSynthesis.speaking) {
+                            stopSpeaking();
+                        }
 						resultDiv.textContent = t('translating');
                         resultDiv.textContent = await translateText(text, source, target);
                     }, 500);
                 });
                 
+                // 手动翻译按钮已移除
+                
+                // 复制翻译结果
                 copyBtn.addEventListener('click', async () => {
                     const text = resultDiv.textContent.trim();
                     if (!text) return;
@@ -1025,12 +1254,14 @@
                     try {
                         await navigator.clipboard.writeText(text);
                         icon.classList.replace('fa-copy', 'fa-check');
+                        // 使用 solid 样式的对勾提升可见度
                         icon.classList.replace('fa-regular', 'fa-solid');
                         setTimeout(() => {
                             icon.classList.replace('fa-check', 'fa-copy');
                             icon.classList.replace('fa-solid', 'fa-regular');
                         }, 1500);
                     } catch (err) {
+                        console.error('copy error:', err);
                         icon.classList.replace('fa-copy', 'fa-xmark');
                         icon.classList.replace('fa-regular', 'fa-solid');
                         setTimeout(() => {
@@ -1040,43 +1271,83 @@
                     }
                 });
                 
-                deleteBtn.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+                // 删除窗口
+                // 防止点击删除按钮时触发标题栏的拖拽 pointerdown
+                deleteBtn.addEventListener('pointerdown', function(e) {
+                    e.stopPropagation();
+                });
                 deleteBtn.addEventListener('click', function() {
-                    if (speakingState.button && card.contains(speakingState.button)) stopSpeaking();
+                    // 若该卡片下存在正在朗读的按钮，先停止
+                    if (speakingState.button && card.contains(speakingState.button)) {
+                        stopSpeaking();
+                    }
                     card.classList.add('fade-out');
-                    setTimeout(() => { card.remove(); saveCurrentWindows(); }, 200);
+                    setTimeout(() => {
+                        card.remove();
+                        saveCurrentWindows();
+                    }, 200);
                 });
 
+                // 朗读：源语言输入
                 if (speakSourceBtn) {
-                    if (!isSpeechSupported) speakSourceBtn.style.display = 'none';
-                    else speakSourceBtn.addEventListener('click', () => { speakText(textarea.value, source, speakSourceBtn); });
+                    if (!isSpeechSupported) {
+                        speakSourceBtn.style.display = 'none';
+                    } else {
+                        speakSourceBtn.addEventListener('click', () => {
+                            speakText(textarea.value, source, speakSourceBtn);
+                        });
+                    }
                 }
+                // 朗读：目标语言结果
                 if (speakTargetBtn) {
-                    if (!isSpeechSupported) speakTargetBtn.style.display = 'none';
-                    else speakTargetBtn.addEventListener('click', () => { speakText(resultDiv.textContent || '', target, speakTargetBtn); });
+                    if (!isSpeechSupported) {
+                        speakTargetBtn.style.display = 'none';
+                    } else {
+                        speakTargetBtn.addEventListener('click', () => {
+                            speakText(resultDiv.textContent || '', target, speakTargetBtn);
+                        });
+                    }
                 }
 
-                // 调整大小逻辑 (保持不变)
+                // 调整大小（右下角拖拽）
                 const handle = card.querySelector('.resize-handle');
                 const resultWrapper = card.querySelector('[data-result-wrapper="true"]');
-                let isResizing = false, startX = 0, startY = 0, startHeight = 0; const minHeight = 120;
+                let isResizing = false;
+                let startX = 0;
+                let startY = 0;
+                let startHeight = 0;
+                const minHeight = 120;
+
                 function onMouseMove(e) {
                     if (!isResizing) return;
                     const deltaY = e.clientY - startY;
                     const nextHeight = Math.max(minHeight, startHeight + deltaY);
+                    // 同步左右两侧高度
                     textarea.style.height = nextHeight + 'px';
                     resultWrapper.style.height = nextHeight + 'px';
+
+                    // 宽度：在大屏幕下，横向拖动切换 1/2 列占位（Masonry 模式下会在两列与全宽之间移动）
                     if (lgQuery.matches) {
                         const deltaX = e.clientX - startX;
                         const currentSpan = card.dataset.span || '1';
-                        if (currentSpan === '1' && deltaX > 60) moveCardToFullWidth(card);
-                        else if (currentSpan === '2' && deltaX < -60) {
+                        if (currentSpan === '1' && deltaX > 60) {
+                            // 切到 2 列宽
+                            // 在 Masonry 下移动到容器并跨两列；非 Masonry 直接跨 2 列
+                            moveCardToFullWidth(card);
+                        } else if (currentSpan === '2' && deltaX < -60) {
+                            // 切回 1 列宽
                             const [col1, col2] = getColumnWrappers();
-                            if (col1 && col2) moveCardToColumns(card);
-                            else { card.dataset.span = '1'; card.style.gridColumn = ''; }
+                            if (col1 && col2) {
+                                moveCardToColumns(card);
+                            } else {
+                                // 非 Masonry，仅清除跨列样式
+                                card.dataset.span = '1';
+                                card.style.gridColumn = '';
+                            }
                         }
                     }
                 }
+
                 function onMouseUp() {
                     if (!isResizing) return;
                     isResizing = false;
@@ -1084,17 +1355,21 @@
                     document.removeEventListener('mousemove', onMouseMove);
                     document.removeEventListener('mouseup', onMouseUp);
                 }
+
                 if (handle) {
                     handle.addEventListener('mousedown', (e) => {
                         e.preventDefault();
                         isResizing = true;
-                        startX = e.clientX; startY = e.clientY;
+                        startX = e.clientX;
+                        startY = e.clientY;
                         startHeight = parseFloat(getComputedStyle(textarea).height) || 160;
                         card.classList.add('resizing');
                         document.addEventListener('mousemove', onMouseMove);
                         document.addEventListener('mouseup', onMouseUp);
                     });
                 }
+                
+                // 标题栏拖拽排序
                 setupDragReorder(card);
             }
 			function refreshAllCardsI18n() {
@@ -1107,7 +1382,7 @@
 					card.dataset.sourceName = sourceName;
 					card.dataset.targetName = targetName;
 					const titleText = card.querySelector('.card-title .text-sm');
-					if (titleText) titleText.innerHTML = `${sourceName} <span class="text-zinc-400 mx-1">→</span> ${targetName}`;
+					if (titleText) titleText.textContent = `${sourceName} → ${targetName}`;
 					const textarea = card.querySelector('textarea.input-box');
 					if (textarea) textarea.placeholder = t('inputPlaceholder', { sourceName });
 					const speakBtns = card.querySelectorAll('.speak-source-btn, .speak-target-btn');
@@ -1119,24 +1394,54 @@
 				});
 			}
 
-            initialTranslations.forEach(cfg => { createTranslationWindow(cfg.source, cfg.target); });
+            // 初始化翻译窗口（优先使用本地保存）
+			initialTranslations.forEach(cfg => {
+				createTranslationWindow(cfg.source, cfg.target);
+            });
 
-            addWindowBtn.addEventListener('click', function() { languageModal.classList.remove('hidden'); });
-            function hideModal() { languageModal.classList.add('hidden'); }
+            // 显示语言选择模态框
+            addWindowBtn.addEventListener('click', function() {
+                languageModal.classList.remove('hidden');
+            });
+
+            // 隐藏语言选择模态框
+            function hideModal() {
+                languageModal.classList.add('hidden');
+            }
+
             cancelModalBtn.addEventListener('click', hideModal);
+
+            // 确认添加新翻译窗口
             confirmAddBtn.addEventListener('click', function() {
                 const sourceLang = sourceLanguageSelect.value;
                 const targetLang = targetLanguageSelect.value;
-                if (sourceLang === targetLang) { alert(t('sameLangError')); return; }
+                
+                if (sourceLang === targetLang) {
+                    alert(t('sameLangError'));
+                    return;
+                }
+                
+                // 不允许重复添加：已存在相同源语言与目标语言的卡片
                 const exists = Array.from(document.querySelectorAll('.translation-window')).some(card =>
                     card.dataset.source === sourceLang && card.dataset.target === targetLang
                 );
-                if (exists) { alert(t('duplicateCardError')); return; }
+                if (exists) {
+                    alert(t('duplicateCardError'));
+                    return;
+                }
 				createTranslationWindow(sourceLang, targetLang);
+                
                 hideModal();
             });
-            languageModal.addEventListener('click', function(e) { if (e.target === languageModal) hideModal(); });
 
+            // 点击模态框外部关闭
+            languageModal.addEventListener('click', function(e) {
+                if (e.target === languageModal) {
+                    hideModal();
+                }
+            });
+
+            // UI 语言选择器初始化与切换
             (function initUiLangSelector() {
                 const el = document.getElementById('ui-lang-select');
                 if (!el) return;
@@ -1155,13 +1460,16 @@
                     }
                 });
             })();
+            // 初次应用 UI 文案
             applyI18nToStatic();
             if (deeplKeyStatus) {
                 const hasKey = !!getDeepLKey();
                 deeplKeyStatus.textContent = hasKey ? t('deeplKeyStatusHas') : t('deeplKeyStatusNone');
             }
+            // 访客计数器 - 由 Busuanzi 提供，无需额外请求
         });
     </script>
     <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
 </body>
 </html>
