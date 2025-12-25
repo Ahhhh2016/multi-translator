@@ -119,6 +119,10 @@
                 <button id="add-window-btn" class="btn bg-[#333333] text-white px-4 py-2 rounded-lg text-sm">
                     + 添加
                 </button>
+				<select id="ui-lang-select" class="language-selector px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm text-[#333333]">
+					<option value="zh">中文</option>
+					<option value="en">English</option>
+				</select>
             </div>
         </div>
     </header>
@@ -200,13 +204,13 @@
         </div>
     </div>
 
-    <footer class="bg-white py-4 text-center text-sm text-[#666666] border-t border-[#E0E0E0]">
-    <p>
+	<footer class="bg-white py-4 text-center text-sm text-[#666666] border-t border-[#E0E0E0]">
+	<p id="footer-made-by">
         由 
         <a href="https://github.com/Ahhhh2016" class="text-[#333333] hover:underline font-medium">Ahhhh2016</a> 制作，
         希望这个小工具对你有帮助
     </p>
-    <p>
+	<p id="footer-api">
         使用开源翻译 API（LibreTranslate）实现 
     </p>
     <p id="busuanzi_container_site_pv" style="margin-top: 4px;">
@@ -217,10 +221,10 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // 默认翻译窗口配置
-            const defaultTranslations = [
-                { source: 'zh', target: 'en', sourceName: '中文', targetName: '英文' },
-                { source: 'en', target: 'zh', sourceName: '英文', targetName: '中文' }
-            ];
+			const defaultTranslations = [
+				{ source: 'zh', target: 'en' },
+				{ source: 'en', target: 'zh' }
+			];
 
             // 读取本地保存的翻译窗口，如果没有则使用默认配置
             const savedTranslations = JSON.parse(localStorage.getItem('translationWindows') || 'null');
@@ -257,7 +261,206 @@
             const deeplKeyStatus = document.getElementById('deepl-key-status');
             const sourceLanguageSelect = document.getElementById('source-language');
             const targetLanguageSelect = document.getElementById('target-language');
-            const lgQuery = window.matchMedia('(min-width: 1024px)'); // 对应 Tailwind 的 lg 断点
+			const lgQuery = window.matchMedia('(min-width: 1024px)'); // 对应 Tailwind 的 lg 断点
+			// ===== UI 多语言（i18n）支持 =====
+			const UI_LANGS = ['zh', 'en'];
+			function detectDefaultUiLang() {
+				const saved = (localStorage.getItem('ui_lang') || '').toLowerCase();
+				if (UI_LANGS.includes(saved)) return saved;
+				const nav = (navigator.language || '').toLowerCase();
+				return nav.startsWith('zh') ? 'zh' : 'en';
+			}
+			let currentUiLang = detectDefaultUiLang();
+			const UI_I18N = {
+				zh: {
+					importDeepl: '导入 DeepL API Key',
+					add: '+ 添加',
+					addWindowTitle: '添加翻译窗口',
+					sourceLangLabel: '源语言',
+					targetLangLabel: '目标语言',
+					cancel: '取消',
+					confirm: '确认',
+					deeplModalTitle: '导入 DeepL API Key',
+					apiKeyLabel: 'API Key',
+					planLabel: '计划 / Plan',
+					planAuto: '自动判断（推荐）',
+					planFree: 'Free（api-free.deepl.com）',
+					planPro: 'Pro（api.deepl.com）',
+					deeplKeyPlaceholder: '请输入 DeepL API Key',
+					deeplKeyStatusHas: '当前状态：已设置 API Key',
+					deeplKeyStatusNone: '当前状态：未设置 API Key',
+					deeplKeyCleared: '已清除 DeepL API Key',
+					deeplKeyUpdated: 'DeepL API Key 已更新（覆盖）',
+					deeplKeySaved: 'DeepL API Key 已保存到本地浏览器（仅此设备）',
+					deeplDeleteConfirm: '确定要删除已保存的 DeepL API Key 吗？此操作仅影响本浏览器。',
+					deeplNoKey: '当前未设置 DeepL API Key',
+					delete: '删除',
+					save: '保存',
+					speak: '朗读',
+					copy: '复制',
+					resize: '拖动调整大小',
+					translating: '翻译中…',
+					translateFailed: '翻译失败，请稍后重试',
+					ttsUnsupported: '当前浏览器不支持朗读功能',
+					sameLangError: '源语言和目标语言不能相同',
+					duplicateCardError: '已存在相同的翻译卡片（相同源语言与目标语言）',
+					footerMadeBy_html: '由 <a href="https://github.com/Ahhhh2016" class="text-[#333333] hover:underline font-medium">Ahhhh2016</a> 制作， 希望这个小工具对你有帮助',
+					footerApi: '使用开源翻译 API（LibreTranslate）实现',
+					footerPV_html: '👀 已有 <span id="busuanzi_value_site_pv">-</span> 位朋友访问了这个页面',
+					deeplFooter_using: '正在使用DeepL API进行翻译',
+					deeplFooter_fallback: '未添加DeepL API，使用LibreTranslate API进行翻译',
+					langName_zh: '中文',
+					langName_en: '英文',
+					langName_ja: '日文',
+					langName_ko: '韩文',
+					langName_fr: '法文',
+					langName_de: '德文',
+					inputPlaceholder: '输入{sourceName}文本...'
+				},
+				en: {
+					importDeepl: 'Import DeepL API Key',
+					add: '+ Add',
+					addWindowTitle: 'Add Translation Window',
+					sourceLangLabel: 'Source language',
+					targetLangLabel: 'Target language',
+					cancel: 'Cancel',
+					confirm: 'Confirm',
+					deeplModalTitle: 'Import DeepL API Key',
+					apiKeyLabel: 'API Key',
+					planLabel: 'Plan',
+					planAuto: 'Auto detect (recommended)',
+					planFree: 'Free (api-free.deepl.com)',
+					planPro: 'Pro (api.deepl.com)',
+					deeplKeyPlaceholder: 'Enter DeepL API Key',
+					deeplKeyStatusHas: 'Status: API Key set',
+					deeplKeyStatusNone: 'Status: No API Key',
+					deeplKeyCleared: 'DeepL API Key cleared',
+					deeplKeyUpdated: 'DeepL API Key updated (overwritten)',
+					deeplKeySaved: 'DeepL API Key saved in this browser (this device only)',
+					deeplDeleteConfirm: 'Delete the saved DeepL API Key? This only affects this browser.',
+					deeplNoKey: 'No DeepL API Key set',
+					delete: 'Delete',
+					save: 'Save',
+					speak: 'Speak',
+					copy: 'Copy',
+					resize: 'Drag to resize',
+					translating: 'Translating…',
+					translateFailed: 'Translation failed, please try again later',
+					ttsUnsupported: 'Text-to-speech is not supported in this browser',
+					sameLangError: 'Source and target languages cannot be the same',
+					duplicateCardError: 'A translation card with the same source and target already exists',
+					footerMadeBy_html: 'Made by <a href="https://github.com/Ahhhh2016" class="text-[#333333] hover:underline font-medium">Ahhhh2016</a>, hope this little tool helps you',
+					footerApi: 'Powered by the open-source LibreTranslate API',
+					footerPV_html: '👀 <span id="busuanzi_value_site_pv">-</span> visits to this page',
+					deeplFooter_using: 'Using DeepL API for translation',
+					deeplFooter_fallback: 'DeepL API not set, using LibreTranslate API for translation',
+					langName_zh: 'Chinese',
+					langName_en: 'English',
+					langName_ja: 'Japanese',
+					langName_ko: 'Korean',
+					langName_fr: 'French',
+					langName_de: 'German',
+					inputPlaceholder: 'Enter {sourceName} text...'
+				}
+			};
+			function t(key, vars) {
+				const dict = UI_I18N[currentUiLang] || {};
+				let s = dict[key] || key;
+				if (vars && typeof s === 'string') {
+					s = s.replace(/\{(\w+)\}/g, (_, k) => (vars[k] != null ? String(vars[k]) : ''));
+				}
+				return s;
+			}
+			function getLanguageDisplayName(code) {
+				const key = 'langName_' + (code || '');
+				return (UI_I18N[currentUiLang] && UI_I18N[currentUiLang][key]) || code;
+			}
+			function updateLangOptionsText() {
+				if (sourceLanguageSelect && sourceLanguageSelect.options) {
+					for (const opt of sourceLanguageSelect.options) {
+						opt.textContent = getLanguageDisplayName(opt.value);
+					}
+				}
+				if (targetLanguageSelect && targetLanguageSelect.options) {
+					for (const opt of targetLanguageSelect.options) {
+						opt.textContent = getLanguageDisplayName(opt.value);
+					}
+				}
+			}
+			function applyDeeplTipsLang() {
+				if (deeplTipZh && deeplTipEn) {
+					const isZh = currentUiLang === 'zh';
+					deeplTipZh.style.display = isZh ? '' : 'none';
+					deeplTipEn.style.display = isZh ? 'none' : '';
+				}
+			}
+			// 根据 DeepL 可用性更新页脚状态
+			function updateFooterApiStatus(preferred) {
+				const el = document.getElementById('footer-api');
+				if (!el) return;
+				if (preferred === 'deepl') {
+					el.textContent = t('deeplFooter_using');
+					return;
+				}
+				if (preferred === 'libre') {
+					el.textContent = t('deeplFooter_fallback');
+					return;
+				}
+				// 判定当前是否具备使用 DeepL 的条件：有本地 Key 或后端可用且存在任一 Key
+				const deeplAvailable = !!getDeepLKey() || (backendReachable && (getDeepLKey() || backendHasServerKey));
+				el.textContent = deeplAvailable ? t('deeplFooter_using') : t('deeplFooter_fallback');
+			}
+			function applyI18nToStatic() {
+				// Document lang
+				document.documentElement.lang = currentUiLang === 'zh' ? 'zh-CN' : 'en';
+				// Header buttons
+				const importBtn = document.getElementById('import-deepl-btn');
+				const addBtn = document.getElementById('add-window-btn');
+				if (importBtn) importBtn.textContent = t('importDeepl');
+				if (addBtn) addBtn.textContent = t('add');
+				// Language modal
+			const langModalTitle = document.querySelector('#language-modal h3');
+			const srcLabel = sourceLanguageSelect ? sourceLanguageSelect.previousElementSibling : null;
+			const tgtLabel = targetLanguageSelect ? targetLanguageSelect.previousElementSibling : null;
+				if (langModalTitle) langModalTitle.textContent = t('addWindowTitle');
+			if (srcLabel && srcLabel.tagName === 'LABEL') srcLabel.textContent = t('sourceLangLabel');
+			if (tgtLabel && tgtLabel.tagName === 'LABEL') tgtLabel.textContent = t('targetLangLabel');
+				const cancelBtn = document.getElementById('cancel-modal-btn');
+				const confirmBtn = document.getElementById('confirm-add-btn');
+				if (cancelBtn) cancelBtn.textContent = t('cancel');
+				if (confirmBtn) confirmBtn.textContent = t('confirm');
+				updateLangOptionsText();
+				// DeepL modal
+				const deeplTitle = document.querySelector('#deepl-modal h3');
+				if (deeplTitle) deeplTitle.textContent = t('deeplModalTitle');
+				const keyLabel = document.querySelector('label[for="deepl-key-input"]');
+				const planLabel = document.querySelector('label[for="deepl-plan-select"]');
+				if (keyLabel) keyLabel.textContent = t('apiKeyLabel');
+				if (planLabel) planLabel.textContent = t('planLabel');
+			if (deeplKeyInput) deeplKeyInput.placeholder = t('deeplKeyPlaceholder');
+				if (deeplPlanSelect && deeplPlanSelect.options && deeplPlanSelect.options.length >= 3) {
+					deeplPlanSelect.options[0].textContent = t('planAuto');
+					deeplPlanSelect.options[1].textContent = t('planFree');
+					deeplPlanSelect.options[2].textContent = t('planPro');
+				}
+				const dCancel = document.getElementById('deepl-cancel-btn');
+				const dDelete = document.getElementById('deepl-delete-btn');
+				const dSave = document.getElementById('deepl-save-btn');
+				if (dCancel) dCancel.textContent = t('cancel');
+				if (dDelete) dDelete.textContent = t('delete');
+				if (dSave) dSave.textContent = t('save');
+				// Footer
+				const footerMadeBy = document.getElementById('footer-made-by');
+				const footerApi = document.getElementById('footer-api');
+				const footerPv = document.getElementById('busuanzi_container_site_pv');
+				if (footerMadeBy) footerMadeBy.innerHTML = t('footerMadeBy_html');
+				if (footerApi) footerApi.textContent = t('footerApi');
+				if (footerPv) footerPv.innerHTML = t('footerPV_html');
+				// Update DeepL tips visibility
+				applyDeeplTipsLang();
+				// 动态更新页脚 API 状态
+				updateFooterApiStatus();
+			}
             // 后端配置与可用性探测
             const BACKEND_URL = (localStorage.getItem('backend_url') || 'http://localhost:3001').replace(/\/+$/, '');
             let backendReachable = false;
@@ -273,6 +476,8 @@
                 } catch (_) {
                     // 后端不可用时保持为 false，继续走前端直连与公共实例逻辑
                 }
+				// 探测结束后刷新页脚状态
+				updateFooterApiStatus();
             })();
 
             // DeepL Key: 获取/保存
@@ -299,15 +504,19 @@
             function showDeeplModal() {
                 // 不回显已有 key，避免肩窥
                 deeplKeyInput.value = '';
+				// 根据当前 UI 语言设置占位
+				if (deeplKeyInput) {
+					deeplKeyInput.placeholder = t('deeplKeyPlaceholder');
+				}
                 // 回显计划
                 if (deeplPlanSelect) {
                     deeplPlanSelect.value = getDeepLPlan();
                 }
                 // 显示当前 Key 状态，并配置删除按钮可用性
-                if (deeplKeyStatus) {
-                    const hasKey = !!getDeepLKey();
-                    deeplKeyStatus.textContent = hasKey ? '当前状态：已设置 API Key' : '当前状态：未设置 API Key';
-                }
+				if (deeplKeyStatus) {
+					const hasKey = !!getDeepLKey();
+					deeplKeyStatus.textContent = hasKey ? t('deeplKeyStatusHas') : t('deeplKeyStatusNone');
+				}
                 if (deeplDeleteBtn) {
                     const hasKey = !!getDeepLKey();
                     deeplDeleteBtn.disabled = !hasKey;
@@ -322,13 +531,8 @@
             function hideDeeplModal() {
                 deeplModal.classList.add('hidden');
             }
-            // 根据用户语言显示提示
-            (function initDeeplTips() {
-                const lang = (navigator.language || '').toLowerCase();
-                const isZh = lang.startsWith('zh');
-                deeplTipZh.style.display = isZh ? '' : 'none';
-                deeplTipEn.style.display = isZh ? 'none' : '';
-            })();
+			// 根据 UI 语言显示提示
+			applyDeeplTipsLang();
             // 绑定导入按钮与模态框
             if (importDeeplBtn) {
                 importDeeplBtn.addEventListener('click', showDeeplModal);
@@ -345,27 +549,29 @@
                     setDeepLPlan(plan);
                     let msg = '';
                     if (!key) {
-                        msg = '已清除 DeepL API Key';
+                        msg = t('deeplKeyCleared');
                     } else if (prev) {
-                        msg = 'DeepL API Key 已更新（覆盖）';
+                        msg = t('deeplKeyUpdated');
                     } else {
-                        msg = 'DeepL API Key 已保存到本地浏览器（仅此设备）';
+                        msg = t('deeplKeySaved');
                     }
                     alert(msg);
                     hideDeeplModal();
+					updateFooterApiStatus();
                 });
             }
             if (deeplDeleteBtn) {
                 deeplDeleteBtn.addEventListener('click', () => {
                     if (!getDeepLKey()) {
-                        alert('当前未设置 DeepL API Key');
+                        alert(t('deeplNoKey'));
                         return;
                     }
-                    const ok = confirm('确定要删除已保存的 DeepL API Key 吗？此操作仅影响本浏览器。');
+                    const ok = confirm(t('deeplDeleteConfirm'));
                     if (!ok) return;
                     setDeepLKey('');
-                    alert('已清除 DeepL API Key');
+                    alert(t('deeplKeyCleared'));
                     hideDeeplModal();
+					updateFooterApiStatus();
                 });
             }
             // 点击模态框外部关闭
@@ -529,6 +735,7 @@
                     serverHasKey: backendHasServerKey,
                     usedClientApiKey: Boolean(apiKey)
                 });
+				updateFooterApiStatus('deepl');
                 return data.resultText || (data.translations && data.translations[0] && data.translations[0].text) || '';
             }
             // 使用 DeepL 翻译（若存在用户的 API Key）
@@ -590,6 +797,7 @@
                 if (endpointUsed) {
                     console.log('[translate] Using DeepL (direct)', { endpoint: endpointUsed });
                 }
+				updateFooterApiStatus('deepl');
                 return data?.translations?.[0]?.text ?? '';
             }
             // 1. 异步翻译函数 —— 优先使用 DeepL（若用户提供 Key），否则回退 LibreTranslate
@@ -654,10 +862,11 @@
                     if (usedLT) {
                         console.log('[translate] Using LibreTranslate', { endpoint: usedLT });
                     }
+					updateFooterApiStatus('libre');
                     return data.translatedText;          // LibreTranslate 的返回字段
                 } catch (err) {
-                    console.error('translate error:', err);
-                    return '翻译失败，请稍后重试';
+					console.error('translate error:', err);
+					return t('translateFailed');
                 }
             }
 
@@ -731,7 +940,7 @@
             }
             function speakText(text, appLang, button) {
                 if (!isSpeechSupported) {
-                    alert('当前浏览器不支持朗读功能');
+					alert(t('ttsUnsupported'));
                     return;
                 }
                 const content = (text || '').toString().trim();
@@ -959,7 +1168,7 @@
             }
 
             // 创建翻译窗口
-            function createTranslationWindow(source, target, sourceName, targetName) {
+			function createTranslationWindow(source, target) {
                 const windowId = `window-${Date.now()}`;
                 const card = document.createElement('div');
                 card.className = 'translation-window bg-white rounded-lg border border-[#E0E0E0] overflow-hidden fade-in relative';
@@ -967,8 +1176,10 @@
                 // 元数据用于持久化
                 card.dataset.source = source;
                 card.dataset.target = target;
-                card.dataset.sourceName = sourceName;
-                card.dataset.targetName = targetName;
+				const sourceName = getLanguageDisplayName(source);
+				const targetName = getLanguageDisplayName(target);
+				card.dataset.sourceName = sourceName;
+				card.dataset.targetName = targetName;
                 card.dataset.span = '1';
                 
                 card.innerHTML = `
@@ -982,26 +1193,26 @@
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2">
                         <div class="p-4 border-r border-[#E0E0E0] relative">
-                            <textarea class="input-box w-full h-40 p-3 bg-white resize-none rounded-lg pr-10" 
-                                      placeholder="输入${sourceName}文本..." 
+							<textarea class="input-box w-full h-40 p-3 bg-white resize-none rounded-lg pr-10" 
+									  placeholder="${t('inputPlaceholder', { sourceName })}" 
                                       data-source="${source}"></textarea>
-                            <button class="speak-source-btn absolute bottom-6 right-7 text-[#666666] hover:text-[#333333]" title="朗读">
+							<button class="speak-source-btn absolute bottom-6 right-7 text-[#666666] hover:text-[#333333]" title="${t('speak')}">
                                 <i class="fa-solid fa-volume-high"></i>
                             </button>
                         </div>
                         <div class="p-4">
                             <div class="relative w-full h-40" data-result-wrapper="true">
                                 <div class="w-full h-full p-3 bg-[#F9F9F9] overflow-auto rounded-lg pr-10" data-target="${target}"></div>
-                                <button class="speak-target-btn absolute bottom-1 right-9 text-[#666666] hover:text-[#333333]" title="朗读">
+								<button class="speak-target-btn absolute bottom-1 right-9 text-[#666666] hover:text-[#333333]" title="${t('speak')}">
                                     <i class="fa-solid fa-volume-high"></i>
                                 </button>
-                                <button class="copy-btn absolute bottom-1 right-3 text-[#666666] hover:text-[#333333]" title="复制">
+								<button class="copy-btn absolute bottom-1 right-3 text-[#666666] hover:text-[#333333]" title="${t('copy')}">
                                     <i class="fa-regular fa-copy"></i>
                                 </button>
                             </div>
                         </div>
                     </div>
-                    <div class="resize-handle" title="拖动调整大小"></div>
+					<div class="resize-handle" title="${t('resize')}"></div>
                 `;
                 
                 // 添加到容器
@@ -1028,7 +1239,7 @@
                         if (isSpeechSupported && window.speechSynthesis.speaking) {
                             stopSpeaking();
                         }
-                        resultDiv.textContent = '翻译中…';
+						resultDiv.textContent = t('translating');
                         resultDiv.textContent = await translateText(text, source, target);
                     }, 500);
                 });
@@ -1161,10 +1372,31 @@
                 // 标题栏拖拽排序
                 setupDragReorder(card);
             }
+			function refreshAllCardsI18n() {
+				const cards = document.querySelectorAll('.translation-window');
+				cards.forEach(card => {
+					const source = card.dataset.source;
+					const target = card.dataset.target;
+					const sourceName = getLanguageDisplayName(source);
+					const targetName = getLanguageDisplayName(target);
+					card.dataset.sourceName = sourceName;
+					card.dataset.targetName = targetName;
+					const titleText = card.querySelector('.card-title .text-sm');
+					if (titleText) titleText.textContent = `${sourceName} → ${targetName}`;
+					const textarea = card.querySelector('textarea.input-box');
+					if (textarea) textarea.placeholder = t('inputPlaceholder', { sourceName });
+					const speakBtns = card.querySelectorAll('.speak-source-btn, .speak-target-btn');
+					speakBtns.forEach(btn => btn.setAttribute('title', t('speak')));
+					const copyBtn = card.querySelector('.copy-btn');
+					if (copyBtn) copyBtn.setAttribute('title', t('copy'));
+					const resize = card.querySelector('.resize-handle');
+					if (resize) resize.setAttribute('title', t('resize'));
+				});
+			}
 
             // 初始化翻译窗口（优先使用本地保存）
-            initialTranslations.forEach(t => {
-                createTranslationWindow(t.source, t.target, t.sourceName, t.targetName);
+			initialTranslations.forEach(cfg => {
+				createTranslationWindow(cfg.source, cfg.target);
             });
 
             // 显示语言选择模态框
@@ -1185,7 +1417,7 @@
                 const targetLang = targetLanguageSelect.value;
                 
                 if (sourceLang === targetLang) {
-                    alert('源语言和目标语言不能相同');
+                    alert(t('sameLangError'));
                     return;
                 }
                 
@@ -1194,25 +1426,10 @@
                     card.dataset.source === sourceLang && card.dataset.target === targetLang
                 );
                 if (exists) {
-                    alert('已存在相同的翻译卡片（相同源语言与目标语言）');
+                    alert(t('duplicateCardError'));
                     return;
                 }
-                
-                const languageNames = {
-                    'zh': '中文',
-                    'en': '英文',
-                    'ja': '日文',
-                    'ko': '韩文',
-                    'fr': '法文',
-                    'de': '德文'
-                };
-                
-                createTranslationWindow(
-                    sourceLang, 
-                    targetLang, 
-                    languageNames[sourceLang], 
-                    languageNames[targetLang]
-                );
+				createTranslationWindow(sourceLang, targetLang);
                 
                 hideModal();
             });
@@ -1224,6 +1441,31 @@
                 }
             });
 
+            // UI 语言选择器初始化与切换
+            (function initUiLangSelector() {
+                const el = document.getElementById('ui-lang-select');
+                if (!el) return;
+                el.value = currentUiLang;
+                el.addEventListener('change', function() {
+                    const v = String(this.value || '').toLowerCase();
+                    if (UI_LANGS.includes(v)) {
+                        currentUiLang = v;
+                        localStorage.setItem('ui_lang', v);
+                        applyI18nToStatic();
+                        refreshAllCardsI18n();
+                        if (deeplKeyStatus) {
+                            const hasKey = !!getDeepLKey();
+                            deeplKeyStatus.textContent = hasKey ? t('deeplKeyStatusHas') : t('deeplKeyStatusNone');
+                        }
+                    }
+                });
+            })();
+            // 初次应用 UI 文案
+            applyI18nToStatic();
+            if (deeplKeyStatus) {
+                const hasKey = !!getDeepLKey();
+                deeplKeyStatus.textContent = hasKey ? t('deeplKeyStatusHas') : t('deeplKeyStatusNone');
+            }
             // 访客计数器 - 由 Busuanzi 提供，无需额外请求
         });
     </script>
