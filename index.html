@@ -377,6 +377,7 @@
 			const UI_I18N = {
 				zh: {
 					importDeepl: '导入 DeepL API Key',
+					updateDeepl: '修改 DeepL API Key',
 					add: '+ 添加',
 					addWindowTitle: '添加翻译窗口',
 					sourceLangLabel: '源语言',
@@ -422,6 +423,7 @@
 				},
 				en: {
 					importDeepl: 'Import DeepL API Key',
+					updateDeepl: 'Update DeepL API Key',
 					add: '+ Add',
 					addWindowTitle: 'Add Translation Window',
 					sourceLangLabel: 'Source language',
@@ -516,7 +518,10 @@
 				document.documentElement.lang = currentUiLang === 'zh' ? 'zh-CN' : 'en';
 				const importBtn = document.getElementById('import-deepl-btn');
 				const addBtn = document.getElementById('add-window-btn');
-				if (importBtn) importBtn.textContent = t('importDeepl');
+				if (importBtn) {
+					const hasKey = !!getDeepLKey();
+					importBtn.textContent = hasKey ? t('updateDeepl') : t('importDeepl');
+				}
 				if (addBtn) {
                     addBtn.innerHTML = `${t('add')}`;
                 }
@@ -625,6 +630,7 @@
                     alert(msg);
                     hideDeeplModal();
 					updateFooterApiStatus();
+					applyI18nToStatic();
                 });
             }
             if (deeplDeleteBtn) {
@@ -636,6 +642,7 @@
                     alert(t('deeplKeyCleared'));
                     hideDeeplModal();
 					updateFooterApiStatus();
+					applyI18nToStatic();
                 });
             }
             if (deeplModal) {
