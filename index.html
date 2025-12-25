@@ -158,13 +158,13 @@
         <div class="container mx-auto px-6 h-16 flex justify-between items-center">
             <h1 class="logo text-xl text-zinc-900 flex items-center space-x-2">
                 <img src="favicon_square.png" alt="Logo" class="h-8 w-8 opacity-90">
-                <span>MultiTranslator</span>
+                <span><span class="bg-zinc-800 text-white px-2 py-0.5 rounded-md">Multi</span>Translator</span>
             </h1>
             <div class="flex items-center gap-3">
                 <button id="import-deepl-btn" class="btn px-4 py-2 border border-zinc-200 rounded-lg text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:border-zinc-300 hover:bg-white bg-transparent">
                     导入 DeepL API Key
                 </button>
-                <button id="add-window-btn" class="btn bg-zinc-900 hover:bg-black text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm">
+                <button id="add-window-btn" class="btn bg-zinc-800 hover:bg-zinc-900 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm">
                     + 添加
                 </button>
 				<select id="ui-lang-select" class="language-selector px-4 py-2 border border-zinc-200 rounded-lg text-sm font-medium text-zinc-700 bg-white">
@@ -255,10 +255,10 @@
     </div>
 
 	<footer class="bg-white border-t border-zinc-200 py-6 text-center text-sm text-zinc-500 mt-auto">
-	    <p id="footer-api" class="text-xs text-zinc-800">
+	    <p id="footer-api" class="mb-1 text-zinc-600">
             使用开源翻译 API（LibreTranslate）实现 
         </p>
-        <p id="footer-made-by" class="mb-1">
+	    <p id="footer-made-by" class="text-xs text-zinc-400">
             由 
             <a href="https://github.com/Ahhhh2016" class="text-zinc-400 hover:underline font-medium">Ahhhh2016</a> 制作，
             希望这个小工具对你有帮助
@@ -355,7 +355,7 @@
 					ttsUnsupported: '当前浏览器不支持朗读功能',
 					sameLangError: '源语言和目标语言不能相同',
 					duplicateCardError: '已存在相同的翻译卡片（相同源语言与目标语言）',
-					footerMadeBy_html: '由 <a href="https://github.com/Ahhhh2016" class="text-zinc-900 hover:underline font-medium">Ahhhh2016</a> 制作， 希望这个小工具对你有帮助',
+					footerMadeBy_html: '由 <a href="https://github.com/Ahhhh2016" class="text-zinc-400 hover:underline font-medium">Ahhhh2016</a> 制作， 希望这个小工具对你有帮助',
 					footerApi: '使用开源翻译 API（LibreTranslate）实现',
 					footerPV_html: '👀 已有 <span id="busuanzi_value_site_pv" class="font-mono">-</span> 位朋友访问了这个页面',
 					deeplFooter_using: '正在使用DeepL API进行翻译',
@@ -400,7 +400,7 @@
 					ttsUnsupported: 'Text-to-speech is not supported in this browser',
 					sameLangError: 'Source and target languages cannot be the same',
 					duplicateCardError: 'A translation card with the same source and target already exists',
-					footerMadeBy_html: 'Made by <a href="https://github.com/Ahhhh2016" class="text-zinc-900 hover:underline font-medium">Ahhhh2016</a>, hope this little tool helps you',
+					footerMadeBy_html: 'Made by <a href="https://github.com/Ahhhh2016" class="text-zinc-400 hover:underline font-medium">Ahhhh2016</a>, hope this little tool can help you',
 					footerApi: 'Powered by the open-source LibreTranslate API',
 					footerPV_html: '👀 <span id="busuanzi_value_site_pv" class="font-mono">-</span> visits to this page',
 					deeplFooter_using: 'Using DeepL API for translation',
