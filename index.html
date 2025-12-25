@@ -884,10 +884,6 @@
                         if (e && e.userFacingMessage) notifyDeeplKeyIssue(e.userFacingMessage);
                     } catch (_) {}
                 }
-                // 没有提供 DeepL Key 或后端未配置时，直接回退到 LibreTranslate，并提示一次
-                if (!(getDeepLKey() || backendHasServerKey)) {
-                    notifyDeeplKeyIssue(t('deeplMissingKey'));
-                }
                 try {
                     const endpoints = ['https://translate.terraprint.co/translate', 'https://translate.fedilab.app/translate'];
                     let resp, usedLT = '';
