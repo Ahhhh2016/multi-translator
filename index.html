@@ -175,6 +175,9 @@
             color: #0F172A;
             transform: scale(1.05);
         }
+        /* 目标语言配色（淡棕色） */
+        .text-target-brown { color: #726e69; }
+        .bg-target-brown { background-color: #f9f7f3; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -182,7 +185,7 @@
         <div class="container mx-auto px-6 h-16 flex justify-between items-center">
             <h1 class="logo text-xl text-slate-700 flex items-center space-x-2.5">
                 <img src="favicon_square.png" alt="Logo" class="h-8 w-8 opacity-90 drop-shadow-sm rounded-md">
-                <span><span class="bg-slate-100 text-slate-700 px-1 py-0.5 rounded-lg shadow-sm text-m align-middle mr-0">Multi</span><span class=" px-0.5 py-0.5 text-m align-middle mr-0">Translator</span>
+                <span><span class="bg-slate-00 text-slate-700 px-1 py-0.5 rounded-lg shadow-sm text-m align-middle mr-0">Multi</span><span class=" px-0.5 py-0.5 text-m align-middle mr-0">Translator</span>
             </h1>
             <div class="flex items-center gap-3">
                 <button id="import-deepl-btn" class="btn px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 bg-white hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 shadow-sm hover:shadow">
@@ -849,11 +852,11 @@
                 if (speaking) {
                     icon.classList.remove('fa-volume-high');
                     icon.classList.add('fa-stop');
-                    button.classList.add('text-indigo-600', 'bg-indigo-50');
+                    button.classList.add('text-target-brown', 'bg-target-brown');
                 } else {
                     icon.classList.remove('fa-stop');
                     icon.classList.add('fa-volume-high');
-                    button.classList.remove('text-indigo-600', 'bg-indigo-50');
+                    button.classList.remove('text-target-brown', 'bg-target-brown');
                 }
             }
             function stopSpeaking() {
@@ -1003,7 +1006,7 @@
                         <div class="text-sm font-bold text-slate-700 flex items-center gap-2">
                             <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs uppercase tracking-wide">${sourceName}</span>
                             <i class="fa-solid fa-arrow-right text-slate-300 text-xs"></i>
-                            <span class="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded text-xs uppercase tracking-wide">${targetName}</span>
+                            <span class="bg-target-brown text-target-brown px-2 py-0.5 rounded text-xs uppercase tracking-wide">${targetName}</span>
                         </div>
                         <button class="delete-btn icon-btn w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors">
                             <i class="fas fa-times"></i>
@@ -1157,7 +1160,7 @@
                         titleDiv.innerHTML = `
                             <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs uppercase tracking-wide">${sourceName}</span>
                             <i class="fa-solid fa-arrow-right text-slate-300 text-xs"></i>
-                            <span class="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded text-xs uppercase tracking-wide">${targetName}</span>
+                            <span class="bg-target-brown text-target-brown px-2 py-0.5 rounded text-xs uppercase tracking-wide">${targetName}</span>
                         `;
                     }
                     
