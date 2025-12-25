@@ -563,7 +563,7 @@
 				updateFooterApiStatus();
 			}
 
-            // 后端配置与可用性探测 (保持不变)
+            // 同源部署时无需额外配置 localStorage
             const BACKEND_URL = (localStorage.getItem('backend_url') || window.location.origin).replace(/\/+$/, '');
             let backendReachable = false;
             let backendHasServerKey = false;
