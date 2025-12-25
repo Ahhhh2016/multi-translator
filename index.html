@@ -321,12 +321,27 @@
 
             // 将当前窗口配置保存到 localStorage
             function saveCurrentWindows() {
-                const configs = Array.from(document.querySelectorAll('.translation-window')).map(card => ({
-                    source: card.dataset.source,
-                    target: card.dataset.target,
-                    sourceName: card.dataset.sourceName,
-                    targetName: card.dataset.targetName,
-                }));
+                const configs = Array.from(document.querySelectorAll('.translation-window')).map(card => {
+                    const textarea = card.querySelector('textarea.input-box');
+                    const parentEl = card.parentElement;
+                    const span = card.dataset.span || '1';
+                    let heightPx = 0;
+                    if (textarea) {
+                        const h = parseFloat(getComputedStyle(textarea).height);
+                        if (!Number.isNaN(h)) heightPx = Math.max(0, Math.round(h));
+                    }
+                    const columnAttr = parentEl && parentEl.getAttribute && parentEl.getAttribute('data-column');
+                    const column = columnAttr ? Number(columnAttr) || 0 : 0;
+                    return {
+                        source: card.dataset.source,
+                        target: card.dataset.target,
+                        sourceName: card.dataset.sourceName,
+                        targetName: card.dataset.targetName,
+                        span,
+                        height: heightPx,
+                        column,
+                    };
+                });
                 localStorage.setItem('translationWindows', JSON.stringify(configs));
             }
 
@@ -986,7 +1001,7 @@
             }
 
             // 创建翻译窗口
-			function createTranslationWindow(source, target) {
+			function createTranslationWindow(source, target, restoredCfg) {
                 const windowId = `window-${Date.now()}`;
                 const card = document.createElement('div');
                 // 优化后的卡片类名 - rounded-2xl
@@ -998,7 +1013,7 @@
 				const targetName = getLanguageDisplayName(target);
 				card.dataset.sourceName = sourceName;
 				card.dataset.targetName = targetName;
-                card.dataset.span = '1';
+                card.dataset.span = restoredCfg && restoredCfg.span ? String(restoredCfg.span) : '1';
                 
                 // 优化内部 HTML 结构和样式 (bg-slate-50, text-slate-800)
                 card.innerHTML = `
@@ -1039,6 +1054,15 @@
                 `;
                 
                 appendCardResponsive(card);
+				// 根据恢复配置放置到指定区域/列
+				if (restoredCfg && restoredCfg.span === '2') {
+					moveCardToFullWidth(card);
+				} else if (restoredCfg && (restoredCfg.column === 1 || restoredCfg.column === 2) && lgQuery.matches) {
+					ensureColumnWrappers();
+					const [col1, col2] = getColumnWrappers();
+					const targetCol = restoredCfg.column === 1 ? col1 : col2;
+					if (targetCol) targetCol.appendChild(card);
+				}
                 saveCurrentWindows();
                 
                 const textarea = card.querySelector('textarea');
@@ -1047,6 +1071,13 @@
                 const copyBtn = card.querySelector('.copy-btn');
                 const speakSourceBtn = card.querySelector('.speak-source-btn');
                 const speakTargetBtn = card.querySelector('.speak-target-btn');
+				// 恢复高度
+				if (restoredCfg && restoredCfg.height && Number(restoredCfg.height) > 0 && textarea) {
+					const h = Math.max(120, Number(restoredCfg.height));
+					const resultWrapper = card.querySelector('[data-result-wrapper="true"]');
+					textarea.style.height = h + 'px';
+					if (resultWrapper) resultWrapper.style.height = h + 'px';
+				}
                 
                 let timeoutId;
                 textarea.addEventListener('input', async () => {
@@ -1130,6 +1161,8 @@
                     card.classList.remove('resizing');
                     document.removeEventListener('mousemove', onMouseMove);
                     document.removeEventListener('mouseup', onMouseUp);
+					// 保存调整后的尺寸与布局
+					saveCurrentWindows();
                 }
                 if (handle) {
                     handle.addEventListener('mousedown', (e) => {
@@ -1175,7 +1208,7 @@
 				});
 			}
 
-            initialTranslations.forEach(cfg => { createTranslationWindow(cfg.source, cfg.target); });
+            initialTranslations.forEach(cfg => { createTranslationWindow(cfg.source, cfg.target, cfg); });
 
             addWindowBtn.addEventListener('click', function() { languageModal.classList.remove('hidden'); });
             function hideModal() { languageModal.classList.add('hidden'); }
