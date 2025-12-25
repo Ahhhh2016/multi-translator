@@ -509,7 +509,7 @@
 					el.textContent = t('deeplFooter_fallback');
 					return;
 				}
-				const deeplAvailable = !!getDeepLKey() || (backendReachable && (getDeepLKey() || backendHasServerKey));
+				const deeplAvailable = backendReachable && (getDeepLKey() || backendHasServerKey);
 				el.textContent = deeplAvailable ? t('deeplFooter_using') : t('deeplFooter_fallback');
 			}
 			function applyI18nToStatic() {
@@ -569,7 +569,7 @@
             let backendHasServerKey = false;
             (async function initBackendHealth() {
                 try {
-                    const r = await fetch(BACKEND_URL + '/health', { mode: 'cors' });
+                    const r = await fetch(BACKEND_URL + '/api/health', { mode: 'cors' });
                     if (r.ok) {
                         const j = await r.json().catch(() => null);
                         backendReachable = true;
@@ -753,62 +753,13 @@
 				updateFooterApiStatus('deepl');
                 return data.resultText || (data.translations && data.translations[0] && data.translations[0].text) || '';
             }
-            async function translateWithDeepL(text, sourceLang, targetLang) {
-                const apiKey = getDeepLKey();
-                if (!apiKey) throw new Error('No DeepL API key');
-                const plan = getDeepLPlan();
-                let endpoints = [];
-                if (plan === 'free') endpoints = ['https://api-free.deepl.com/v2/translate'];
-                else if (plan === 'pro') endpoints = ['https://api.deepl.com/v2/translate'];
-                else {
-                    const looksFree = apiKey.includes(':fx');
-                    endpoints = looksFree
-                        ? ['https://api-free.deepl.com/v2/translate', 'https://api.deepl.com/v2/translate']
-                        : ['https://api.deepl.com/v2/translate', 'https://api-free.deepl.com/v2/translate'];
-                }
-                const params = new URLSearchParams();
-                params.set('auth_key', apiKey);
-                params.set('text', text);
-                const tgt = mapAppLangToDeepL(targetLang);
-                if (!tgt) throw new Error('Invalid target_lang');
-                params.set('target_lang', tgt);
-                if (sourceLang) {
-                    const src = mapAppLangToDeepL(sourceLang);
-                    if (src) params.set('source_lang', src);
-                }
-                let resp, data, lastErr = null;
-                for (const endpoint of endpoints) {
-                    try {
-                        resp = await fetch(endpoint, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
-                            body: params.toString(),
-                            mode: 'cors',
-                        });
-                        if (!resp.ok) {
-                            lastErr = new Error(`DeepL error ${resp.status}`);
-                            continue;
-                        }
-                        data = await resp.json();
-                        break;
-                    } catch (e) { lastErr = e; continue; }
-                }
-                if (!data) throw lastErr || new Error('DeepL request failed');
-				updateFooterApiStatus('deepl');
-                return data?.translations?.[0]?.text ?? '';
-            }
             async function translateText(text, sourceLang, targetLang) {
                 if (!text.trim()) return '';
                 try {
-                    if (backendReachable && (getDeepLKey() || backendHasServerKey)) {
+                    if (getDeepLKey() || backendHasServerKey) {
                         return await translateViaBackend(text, sourceLang, targetLang);
                     }
                 } catch (e) {}
-                const deeplKey = getDeepLKey();
-                if (deeplKey) {
-                    try { return await translateWithDeepL(text, sourceLang, targetLang); }
-                    catch (e) {}
-                }
                 try {
                     const endpoints = ['https://translate.terraprint.co/translate', 'https://translate.fedilab.app/translate'];
                     let resp, usedLT = '';
