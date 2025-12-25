@@ -564,7 +564,7 @@
 			}
 
             // 后端配置与可用性探测 (保持不变)
-            const BACKEND_URL = (localStorage.getItem('backend_url') || 'http://localhost:3001').replace(/\/+$/, '');
+            const BACKEND_URL = (localStorage.getItem('backend_url') || window.location.origin).replace(/\/+$/, '');
             let backendReachable = false;
             let backendHasServerKey = false;
             (async function initBackendHealth() {
