@@ -6,60 +6,67 @@
     <title>Multi Translator</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com/3.3.3"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <link rel="icon" type="image/png" href="favicon_square.png">
     <style>
-        /* 基础设置：使用 Inter 字体，背景调整为细腻的浅灰 */
+        /* 基础设置 */
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #FAFAFA; /* 极浅灰背景 */
-            color: #18181B; /* Zinc-900 */
+            background-color: #F8FAFC; /* Slate-50: 比原本的 Zinc 更清透 */
+            color: #334155; /* Slate-700: 字体颜色更柔和，不是纯黑 */
             -webkit-font-smoothing: antialiased;
+            /* 选中文本颜色 */
+            ::selection {
+                background-color: #E2E8F0;
+                color: #0F172A;
+            }
         }
 
-        /* 滚动条美化 */
+        /* 滚动条美化 - 更细更淡 */
         ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
         }
         ::-webkit-scrollbar-track {
             background: transparent;
         }
         ::-webkit-scrollbar-thumb {
-            background: #E4E4E7;
-            border-radius: 4px;
+            background: #CBD5E1;
+            border-radius: 3px;
+            transition: background 0.2s;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #A1A1AA;
+            background: #94A3B8;
         }
 
-        /* 翻译卡片样式 */
+        /* 翻译卡片样式 - 悬浮质感优化 */
         .translation-window {
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            box-shadow: 0 1px 2px -1px rgba(0, 0, 0, 0.1), 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             background-color: #FFFFFF;
-            border: 1px solid #E4E4E7; /* Zinc-200 */
+            /* 极细的边框 + 柔和的扩散阴影 */
+            border: 1px solid rgba(226, 232, 240, 0.8); 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
         }
         .translation-window:hover {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            border-color: #D4D4D8;
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.01);
+            border-color: rgba(203, 213, 225, 0.6);
         }
 
         /* 输入框样式优化 */
         .input-box {
-            border: 1px solid transparent;
+            border: none;
             transition: all 0.2s ease;
             background-color: transparent;
-            color: #18181B;
+            color: #1E293B; /* Slate-800 */
             font-size: 0.95rem;
-            line-height: 1.6;
+            line-height: 1.7; /* 增加行高，阅读更舒适 */
         }
-        /* 聚焦时显示黑色细边框 */
         .input-box:focus {
             outline: none;
-            background-color: #FAFAFA;
+            /* 聚焦时不改变背景，保持清爽 */
         }
         
         /* 按钮通用动效 */
@@ -67,38 +74,41 @@
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .btn:active {
-            transform: scale(0.98);
+            transform: scale(0.97);
         }
 
         /* 动画类 */
-        .fade-in { animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .fade-out { animation: fadeOut 0.2s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: scale(0.95); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: scale(0.98); } }
 
-        /* 语言选择器 */
+        /* 语言选择器 - 更加扁平化 */
         .language-selector {
-            transition: border-color 0.2s, box-shadow 0.2s;
+            transition: all 0.2s;
             cursor: pointer;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2352525b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
             background-position: right 0.5rem center;
             background-repeat: no-repeat;
-            background-size: 1.5em 1.5em;
+            background-size: 1.25em 1.25em;
             padding-right: 2.5rem;
             appearance: none;
             -webkit-appearance: none;
             -moz-appearance: none;
         }
+        .language-selector:hover {
+            background-color: #F1F5F9;
+        }
         .language-selector:focus {
             outline: none;
-            border-color: #18181B;
+            border-color: #94A3B8;
+            box-shadow: 0 0 0 3px rgba(226, 232, 240, 0.5); /* 柔和的光晕 */
         }
-        /* 顶部 UI 语言选择器的专属优化，避免与箭头重叠并保证最小宽度 */
         #ui-lang-select.language-selector {
-            background-size: 1.25em 1.25em;
-            background-position: right 0.75rem center;
-            padding-right: 2.75rem;
-            min-width: 6.5rem; /* 约 104px，容纳 "English" 文本与箭头 */
+            background-size: 1.1em 1.1em;
+            background-position: right 0.6rem center;
+            padding-right: 2.25rem;
+            min-width: 6.5rem;
             white-space: nowrap;
         }
 
@@ -107,24 +117,25 @@
         /* Resize handle 优化 */
         .resize-handle {
             position: absolute;
-            width: 16px;
-            height: 16px;
-            right: 4px;
-            bottom: 4px;
+            width: 20px;
+            height: 20px;
+            right: 2px;
+            bottom: 2px;
             cursor: nwse-resize;
-            opacity: 0.4;
+            opacity: 0.2;
             transition: opacity 0.2s;
+            border-radius: 0 0 12px 0;
         }
-        .resize-handle:hover { opacity: 1; }
+        .resize-handle:hover { opacity: 0.6; }
         .resize-handle::before {
             content: '';
             position: absolute;
-            right: 2px;
-            bottom: 2px;
-            width: 8px;
-            height: 8px;
-            border-right: 2px solid #52525B;
-            border-bottom: 2px solid #52525B;
+            right: 5px;
+            bottom: 5px;
+            width: 6px;
+            height: 6px;
+            border-right: 2px solid #64748B;
+            border-bottom: 2px solid #64748B;
             border-radius: 1px;
         }
         
@@ -134,40 +145,53 @@
         .drag-handle { cursor: grab; }
         .drag-handle:active { cursor: grabbing; }
         .translation-window.dragging {
-            opacity: 0.9;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            transform: scale(1.02);
+            opacity: 0.95;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            transform: scale(1.01) rotate(0.5deg);
             user-select: none;
             pointer-events: none;
             z-index: 50;
+            border-color: #94A3B8;
         }
         .drop-placeholder {
-            background-color: #F4F4F5;
-            border: 2px dashed #D4D4D8;
-            border-radius: 12px;
+            background-color: #F1F5F9; /* Slate-100 */
+            border: 2px dashed #CBD5E1; /* Slate-300 */
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
         }
 
         /* 模态框背景模糊 */
         #language-modal, #deepl-modal {
-            backdrop-filter: blur(2px);
+            backdrop-filter: blur(4px);
+            transition: backdrop-filter 0.3s;
+        }
+        
+        /* 图标按钮动效 */
+        .icon-btn {
+            transition: all 0.2s;
+        }
+        .icon-btn:hover {
+            background-color: #F1F5F9;
+            color: #0F172A;
+            transform: scale(1.05);
         }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
-    <header class="bg-white/80 backdrop-blur-md border-b border-zinc-200 sticky top-0 z-40">
+    <header class="bg-slate-50/80 backdrop-blur-xl border-b border-slate-200/50 sticky top-0 z-40 transition-all duration-300 shadow-sm">
         <div class="container mx-auto px-6 h-16 flex justify-between items-center">
-            <h1 class="logo text-xl text-zinc-900 flex items-center space-x-2">
-                <img src="favicon_square.png" alt="Logo" class="h-8 w-8 opacity-90">
-                <span><span class="bg-zinc-800 text-white px-2 py-0.5 rounded-md">Multi</span>Translator</span>
+            <h1 class="logo text-xl text-slate-700 flex items-center space-x-2.5">
+                <img src="favicon_square.png" alt="Logo" class="h-8 w-8 opacity-90 drop-shadow-sm rounded-md">
+                <span><span class="bg-slate-100 text-slate-700 px-1 py-0.5 rounded-lg shadow-sm text-m align-middle mr-0">Multi</span><span class=" px-0.5 py-0.5 text-m align-middle mr-0">Translator</span>
             </h1>
             <div class="flex items-center gap-3">
-                <button id="import-deepl-btn" class="btn px-4 py-2 border border-zinc-200 rounded-lg text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:border-zinc-300 hover:bg-white bg-transparent">
+                <button id="import-deepl-btn" class="btn px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 bg-white hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 shadow-sm hover:shadow">
                     导入 DeepL API Key
                 </button>
-                <button id="add-window-btn" class="btn bg-zinc-800 hover:bg-zinc-900 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm">
+                <button id="add-window-btn" class="btn bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 px-4 py-2 rounded-xl text-sm font-medium shadow-sm hover:shadow-md flex items-center gap-2">
                     + 添加
                 </button>
-				<select id="ui-lang-select" class="language-selector px-4 py-2 border border-zinc-200 rounded-lg text-sm font-medium text-zinc-700 bg-white">
+				<select id="ui-lang-select" class="language-selector px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 bg-white hover:border-slate-300 shadow-sm">
 					<option value="zh">中文</option>
 					<option value="en">English</option>
 				</select>
@@ -175,19 +199,21 @@
         </div>
     </header>
 
-    <main class="container mx-auto py-8 px-6 flex-grow">
-        <div id="translation-container" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <main class="container mx-auto py-10 px-6 flex-grow">
+        <div id="translation-container" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             </div>
     </main>
 
-    <div id="language-modal" class="fixed inset-0 bg-zinc-900/40 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md border border-zinc-100 transform transition-all">
-            <h3 class="text-lg font-semibold text-zinc-900 mb-6">添加翻译窗口</h3>
-            <div class="space-y-5">
+    <div id="language-modal" class="fixed inset-0 bg-slate-900/20 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md border border-white/50 transform transition-all scale-100">
+            <h3 class="text-xl font-bold text-slate-800 mb-8 flex items-center gap-2">
+                <i class="fa-solid fa-plus-circle text-slate-400"></i> 添加翻译窗口
+            </h3>
+            <div class="space-y-6">
                 <div>
-                    <label class="block text-sm font-medium text-zinc-500 mb-2">源语言</label>
+                    <label class="block text-sm font-semibold text-slate-500 mb-2.5 uppercase tracking-wide text-xs">源语言</label>
                     <div class="relative">
-                        <select id="source-language" class="language-selector w-full border border-zinc-200 rounded-lg px-4 py-2.5 text-zinc-800 bg-zinc-50 focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-colors">
+                        <select id="source-language" class="language-selector w-full border border-slate-200 rounded-xl px-4 py-3 text-slate-700 bg-slate-50 hover:bg-white focus:bg-white focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all">
                             <option value="zh">中文</option>
                             <option value="en">英文</option>
                             <option value="ja">日文</option>
@@ -197,10 +223,15 @@
                         </select>
                     </div>
                 </div>
+                <div class="flex justify-center -my-2 relative z-10">
+                     <div class="bg-slate-100 p-1.5 rounded-full text-slate-400 border border-white shadow-sm">
+                         <i class="fa-solid fa-arrow-down"></i>
+                     </div>
+                </div>
                 <div>
-                    <label class="block text-sm font-medium text-zinc-500 mb-2">目标语言</label>
+                    <label class="block text-sm font-semibold text-slate-500 mb-2.5 uppercase tracking-wide text-xs">目标语言</label>
                     <div class="relative">
-                        <select id="target-language" class="language-selector w-full border border-zinc-200 rounded-lg px-4 py-2.5 text-zinc-800 bg-zinc-50 focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-colors">
+                        <select id="target-language" class="language-selector w-full border border-slate-200 rounded-xl px-4 py-3 text-slate-700 bg-slate-50 hover:bg-white focus:bg-white focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all">
                             <option value="en">英文</option>
                             <option value="zh">中文</option>
                             <option value="ja">日文</option>
@@ -211,60 +242,63 @@
                     </div>
                 </div>
             </div>
-            <div class="mt-8 flex justify-end space-x-3">
-                <button id="cancel-modal-btn" class="px-5 py-2.5 rounded-lg text-sm font-medium text-zinc-600 hover:bg-zinc-100 transition-colors">取消</button>
-                <button id="confirm-add-btn" class="btn bg-zinc-900 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-black shadow-lg shadow-zinc-200">确认</button>
+            <div class="mt-10 flex justify-end space-x-3">
+                <button id="cancel-modal-btn" class="px-5 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-colors">取消</button>
+                <button id="confirm-add-btn" class="btn bg-slate-800 text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-slate-900 shadow-lg shadow-slate-300 hover:shadow-xl hover:shadow-slate-300/60 hover:-translate-y-0.5 transition-all">确认添加</button>
             </div>
         </div>
     </div>
 
-    <div id="deepl-modal" class="fixed inset-0 bg-zinc-900/40 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md border border-zinc-100">
-            <h3 class="text-lg font-semibold text-zinc-900 mb-6">导入 DeepL API Key</h3>
-            <div class="space-y-4">
+    <div id="deepl-modal" class="fixed inset-0 bg-slate-900/20 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md border border-white/50">
+            <h3 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-key text-slate-400"></i> 导入 DeepL API Key
+            </h3>
+            <div class="space-y-5">
                 <div>
-                    <label for="deepl-key-input" class="block text-sm font-medium text-zinc-500 mb-2">API Key</label>
-                    <input id="deepl-key-input" type="password" class="w-full border border-zinc-200 rounded-lg px-4 py-2.5 text-zinc-800 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 bg-zinc-50 focus:bg-white transition-colors" placeholder="请输入 DeepL API Key">
+                    <label for="deepl-key-input" class="block text-sm font-semibold text-slate-500 mb-2">API Key</label>
+                    <input id="deepl-key-input" type="password" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-slate-700 focus:outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-100 bg-slate-50 focus:bg-white transition-all shadow-sm" placeholder="请输入 DeepL API Key">
                 </div>
                 <div>
-                    <label for="deepl-plan-select" class="block text-sm font-medium text-zinc-500 mb-2">计划 / Plan</label>
+                    <label for="deepl-plan-select" class="block text-sm font-semibold text-slate-500 mb-2">计划 / Plan</label>
                     <div class="relative">
-                        <select id="deepl-plan-select" class="language-selector w-full border border-zinc-200 rounded-lg px-4 py-2.5 text-zinc-800 bg-zinc-50 focus:bg-white focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-colors">
+                        <select id="deepl-plan-select" class="language-selector w-full border border-slate-200 rounded-xl px-4 py-3 text-slate-700 bg-slate-50 focus:bg-white focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all">
                             <option value="auto">自动判断（推荐）</option>
                             <option value="free">Free（api-free.deepl.com）</option>
                             <option value="pro">Pro（api.deepl.com）</option>
                         </select>
                     </div>
                 </div>
-                <div class="text-xs text-zinc-500 leading-relaxed bg-zinc-50 p-3 rounded-lg border border-zinc-100">
+                <div class="text-xs text-slate-500 leading-relaxed bg-blue-50/50 p-4 rounded-xl border border-blue-100/50">
                     <p id="deepl-tip-en">
-                        You can find and manage your API keys in the “API Keys &amp; Limits” (<a href="https://www.deepl.com/your-account/keys" target="_blank" class="text-zinc-900 underline hover:no-underline">https://www.deepl.com/your-account/keys</a>) tab when signed into your DeepL API account.
+                        You can find and manage your API keys in the “API Keys &amp; Limits” (<a href="https://www.deepl.com/your-account/keys" target="_blank" class="text-blue-600 underline hover:no-underline decoration-blue-300">https://www.deepl.com/your-account/keys</a>) tab when signed into your DeepL API account.
                     </p>
                     <p id="deepl-tip-zh">
-                        登录 DeepL API 帐户后，您可以在“API 密钥和限制”（<a href="https://www.deepl.com/your-account/keys" target="_blank" class="text-zinc-900 underline hover:no-underline">https://www.deepl.com/your-account/keys</a>）选项卡中查找和管理您的 API 密钥。
+                        登录 DeepL API 帐户后，您可以在“API 密钥和限制”（<a href="https://www.deepl.com/your-account/keys" target="_blank" class="text-blue-600 underline hover:no-underline decoration-blue-300">https://www.deepl.com/your-account/keys</a>）选项卡中查找和管理您的 API 密钥。
                     </p>
                 </div>
-                <div id="deepl-key-status" class="text-xs font-medium text-zinc-600"></div>
+                <div id="deepl-key-status" class="text-xs font-semibold text-slate-500 flex items-center gap-2">
+                    </div>
             </div>
             <div class="mt-8 flex justify-end space-x-3">
-                <button id="deepl-cancel-btn" class="px-5 py-2.5 rounded-lg text-sm font-medium text-zinc-600 hover:bg-zinc-100 transition-colors">取消</button>
-                <button id="deepl-delete-btn" class="px-5 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">删除</button>
-                <button id="deepl-save-btn" class="btn bg-zinc-900 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-black shadow-lg shadow-zinc-200">保存</button>
+                <button id="deepl-cancel-btn" class="px-5 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors">取消</button>
+                <button id="deepl-delete-btn" class="px-5 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-colors">删除</button>
+                <button id="deepl-save-btn" class="btn bg-slate-800 text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-slate-900 shadow-lg shadow-slate-300 hover:shadow-xl hover:shadow-slate-300/60 hover:-translate-y-0.5 transition-all">保存</button>
             </div>
         </div>
     </div>
 
-	<footer class="bg-white border-t border-zinc-200 py-6 text-center text-sm text-zinc-500 mt-auto">
-	    <p id="footer-api" class="mb-1 text-zinc-600">
+	<footer class="bg-white/50 backdrop-blur-sm border-t border-slate-200 py-8 text-center text-sm text-slate-500 mt-auto">
+	    <p id="footer-api" class="mb-2 text-slate-600 font-medium">
             使用开源翻译 API（LibreTranslate）实现 
         </p>
-	    <p id="footer-made-by" class="text-xs text-zinc-400">
+	    <p id="footer-made-by" class="text-xs text-slate-400">
             由 
-            <a href="https://github.com/Ahhhh2016" class="text-zinc-400 hover:underline font-medium">Ahhhh2016</a> 制作，
+            <a href="https://github.com/Ahhhh2016" class="text-slate-500 hover:text-slate-800 hover:underline font-medium transition-colors">Ahhhh2016</a> 制作，
             希望这个小工具对你有帮助
         </p>
-        <p id="busuanzi_container_site_pv" class="text-xs text-zinc-400 mt-2">
-            👀 已有 <span id="busuanzi_value_site_pv" class="font-mono">-</span> 位朋友访问了这个页面
+        <p id="busuanzi_container_site_pv" class="text-xs text-slate-400 mt-2 opacity-80">
+            👀 已有 <span id="busuanzi_value_site_pv" class="font-mono font-bold text-slate-500">-</span> 位朋友访问了这个页面
         </p>
     </footer>
 
@@ -330,7 +364,7 @@
 					sourceLangLabel: '源语言',
 					targetLangLabel: '目标语言',
 					cancel: '取消',
-					confirm: '确认',
+					confirm: '确认添加',
 					deeplModalTitle: '导入 DeepL API Key',
 					apiKeyLabel: 'API Key',
 					planLabel: '计划 / Plan',
@@ -338,8 +372,8 @@
 					planFree: 'Free（api-free.deepl.com）',
 					planPro: 'Pro（api.deepl.com）',
 					deeplKeyPlaceholder: '请输入 DeepL API Key',
-					deeplKeyStatusHas: '当前状态：已设置 API Key',
-					deeplKeyStatusNone: '当前状态：未设置 API Key',
+					deeplKeyStatusHas: '✅ 当前状态：已设置 API Key',
+					deeplKeyStatusNone: '⚪ 当前状态：未设置 API Key',
 					deeplKeyCleared: '已清除 DeepL API Key',
 					deeplKeyUpdated: 'DeepL API Key 已更新（覆盖）',
 					deeplKeySaved: 'DeepL API Key 已保存到本地浏览器（仅此设备）',
@@ -355,9 +389,9 @@
 					ttsUnsupported: '当前浏览器不支持朗读功能',
 					sameLangError: '源语言和目标语言不能相同',
 					duplicateCardError: '已存在相同的翻译卡片（相同源语言与目标语言）',
-					footerMadeBy_html: '由 <a href="https://github.com/Ahhhh2016" class="text-zinc-400 hover:underline font-medium">Ahhhh2016</a> 制作， 希望这个小工具对你有帮助',
+					footerMadeBy_html: '由 <a href="https://github.com/Ahhhh2016" class="text-slate-500 hover:text-slate-800 hover:underline font-medium transition-colors">Ahhhh2016</a> 制作， 希望这个小工具对你有帮助',
 					footerApi: '使用开源翻译 API（LibreTranslate）实现',
-					footerPV_html: '👀 已有 <span id="busuanzi_value_site_pv" class="font-mono">-</span> 位朋友访问了这个页面',
+					footerPV_html: '👀 已有 <span id="busuanzi_value_site_pv" class="font-mono font-bold text-slate-500">-</span> 位朋友访问了这个页面',
 					deeplFooter_using: '正在使用DeepL API进行翻译',
 					deeplFooter_fallback: '未添加DeepL API，使用LibreTranslate API进行翻译',
 					langName_zh: '中文',
@@ -383,8 +417,8 @@
 					planFree: 'Free (api-free.deepl.com)',
 					planPro: 'Pro (api.deepl.com)',
 					deeplKeyPlaceholder: 'Enter DeepL API Key',
-					deeplKeyStatusHas: 'Status: API Key set',
-					deeplKeyStatusNone: 'Status: No API Key',
+					deeplKeyStatusHas: '✅ Status: API Key set',
+					deeplKeyStatusNone: '⚪ Status: No API Key',
 					deeplKeyCleared: 'DeepL API Key cleared',
 					deeplKeyUpdated: 'DeepL API Key updated (overwritten)',
 					deeplKeySaved: 'DeepL API Key saved in this browser (this device only)',
@@ -400,9 +434,9 @@
 					ttsUnsupported: 'Text-to-speech is not supported in this browser',
 					sameLangError: 'Source and target languages cannot be the same',
 					duplicateCardError: 'A translation card with the same source and target already exists',
-					footerMadeBy_html: 'Made by <a href="https://github.com/Ahhhh2016" class="text-zinc-400 hover:underline font-medium">Ahhhh2016</a>, hope this little tool can help you',
+					footerMadeBy_html: 'Made by <a href="https://github.com/Ahhhh2016" class="text-slate-500 hover:text-slate-800 hover:underline font-medium transition-colors">Ahhhh2016</a>, hope this little tool can help you',
 					footerApi: 'Powered by the open-source LibreTranslate API',
-					footerPV_html: '👀 <span id="busuanzi_value_site_pv" class="font-mono">-</span> visits to this page',
+					footerPV_html: '👀 <span id="busuanzi_value_site_pv" class="font-mono font-bold text-slate-500">-</span> visits to this page',
 					deeplFooter_using: 'Using DeepL API for translation',
 					deeplFooter_fallback: 'DeepL API not set, using LibreTranslate API for translation',
 					langName_zh: 'Chinese',
@@ -465,12 +499,14 @@
 				const importBtn = document.getElementById('import-deepl-btn');
 				const addBtn = document.getElementById('add-window-btn');
 				if (importBtn) importBtn.textContent = t('importDeepl');
-				if (addBtn) addBtn.textContent = t('add');
+				if (addBtn) {
+                    addBtn.innerHTML = `${t('add')}`;
+                }
 				
                 const langModalTitle = document.querySelector('#language-modal h3');
                 const srcLabel = sourceLanguageSelect ? sourceLanguageSelect.parentElement.previousElementSibling : null;
                 const tgtLabel = targetLanguageSelect ? targetLanguageSelect.parentElement.previousElementSibling : null;
-				if (langModalTitle) langModalTitle.textContent = t('addWindowTitle');
+				if (langModalTitle) langModalTitle.innerHTML = `<i class="fa-solid fa-plus-circle text-slate-400"></i> ${t('addWindowTitle')}`;
                 if (srcLabel && srcLabel.tagName === 'LABEL') srcLabel.textContent = t('sourceLangLabel');
                 if (tgtLabel && tgtLabel.tagName === 'LABEL') tgtLabel.textContent = t('targetLangLabel');
                 
@@ -481,7 +517,7 @@
 				updateLangOptionsText();
 				
 				const deeplTitle = document.querySelector('#deepl-modal h3');
-				if (deeplTitle) deeplTitle.textContent = t('deeplModalTitle');
+				if (deeplTitle) deeplTitle.innerHTML = `<i class="fa-solid fa-key text-slate-400"></i> ${t('deeplModalTitle')}`;
 				const keyLabel = document.querySelector('label[for="deepl-key-input"]');
 				const planLabel = document.querySelector('label[for="deepl-plan-select"]');
 				if (keyLabel) keyLabel.textContent = t('apiKeyLabel');
@@ -813,11 +849,11 @@
                 if (speaking) {
                     icon.classList.remove('fa-volume-high');
                     icon.classList.add('fa-stop');
-                    button.classList.add('text-zinc-900');
+                    button.classList.add('text-indigo-600', 'bg-indigo-50');
                 } else {
                     icon.classList.remove('fa-stop');
                     icon.classList.add('fa-volume-high');
-                    button.classList.remove('text-zinc-900');
+                    button.classList.remove('text-indigo-600', 'bg-indigo-50');
                 }
             }
             function stopSpeaking() {
@@ -950,8 +986,8 @@
 			function createTranslationWindow(source, target) {
                 const windowId = `window-${Date.now()}`;
                 const card = document.createElement('div');
-                // 优化后的卡片类名
-                card.className = 'translation-window rounded-xl overflow-hidden fade-in relative';
+                // 优化后的卡片类名 - rounded-2xl
+                card.className = 'translation-window rounded-2xl overflow-hidden fade-in relative';
                 card.id = windowId;
                 card.dataset.source = source;
                 card.dataset.target = target;
@@ -961,33 +997,35 @@
 				card.dataset.targetName = targetName;
                 card.dataset.span = '1';
                 
-                // 优化内部 HTML 结构和样式
+                // 优化内部 HTML 结构和样式 (bg-slate-50, text-slate-800)
                 card.innerHTML = `
-                    <div class="card-title drag-handle bg-zinc-50 border-b border-zinc-100 py-3 px-5 flex justify-between items-center h-12">
-                        <div class="text-sm font-semibold text-zinc-700">
-                            ${sourceName} <span class="text-zinc-400 mx-1">→</span> ${targetName}
+                    <div class="card-title drag-handle bg-white border-b border-slate-100 py-3.5 px-6 flex justify-between items-center h-14">
+                        <div class="text-sm font-bold text-slate-700 flex items-center gap-2">
+                            <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs uppercase tracking-wide">${sourceName}</span>
+                            <i class="fa-solid fa-arrow-right text-slate-300 text-xs"></i>
+                            <span class="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded text-xs uppercase tracking-wide">${targetName}</span>
                         </div>
-                        <button class="delete-btn text-zinc-400 hover:text-red-500 transition-colors">
+                        <button class="delete-btn icon-btn w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-zinc-100">
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100">
                         <div class="p-0 relative group">
-							<textarea class="input-box w-full h-48 p-5 resize-none pr-12 focus:bg-zinc-50 transition-colors" 
+							<textarea class="input-box w-full h-52 p-6 resize-none pr-12 placeholder-slate-400" 
 									  placeholder="${t('inputPlaceholder', { sourceName })}" 
                                       data-source="${source}"></textarea>
-							<button class="speak-source-btn absolute bottom-3 right-3 text-zinc-400 hover:text-zinc-900 transition-colors p-2 rounded-lg hover:bg-zinc-100" title="${t('speak')}">
+							<button class="speak-source-btn icon-btn absolute bottom-3 right-3 text-slate-400 p-2 rounded-xl" title="${t('speak')}">
                                 <i class="fa-solid fa-volume-high"></i>
                             </button>
                         </div>
-                        <div class="p-0 relative bg-zinc-50/50">
-                            <div class="relative w-full h-48" data-result-wrapper="true">
-                                <div class="w-full h-full p-5 overflow-auto pr-12 text-zinc-800 leading-relaxed" data-target="${target}"></div>
-								<div class="absolute bottom-2 right-2 flex space-x-1">
-                                    <button class="speak-target-btn text-zinc-400 hover:text-zinc-900 transition-colors p-2 rounded-lg hover:bg-white hover:shadow-sm" title="${t('speak')}">
+                        <div class="p-0 relative bg-slate-50/50">
+                            <div class="relative w-full h-52" data-result-wrapper="true">
+                                <div class="w-full h-full p-6 overflow-auto pr-12 text-slate-800 leading-relaxed font-medium" data-target="${target}"></div>
+								<div class="absolute bottom-3 right-3 flex space-x-1">
+                                    <button class="speak-target-btn icon-btn text-slate-400 p-2 rounded-xl" title="${t('speak')}">
                                         <i class="fa-solid fa-volume-high"></i>
                                     </button>
-                                    <button class="copy-btn text-zinc-400 hover:text-zinc-900 transition-colors p-2 rounded-lg hover:bg-white hover:shadow-sm" title="${t('copy')}">
+                                    <button class="copy-btn icon-btn text-slate-400 p-2 rounded-xl" title="${t('copy')}">
                                         <i class="fa-regular fa-copy"></i>
                                     </button>
                                 </div>
@@ -1014,7 +1052,11 @@
                         const text = textarea.value;
                         if (isSpeechSupported && window.speechSynthesis.speaking) stopSpeaking();
 						resultDiv.textContent = t('translating');
-                        resultDiv.textContent = await translateText(text, source, target);
+                        // 正在翻译时字体颜色变淡
+                        resultDiv.classList.add('text-slate-400');
+                        const res = await translateText(text, source, target);
+                        resultDiv.classList.remove('text-slate-400');
+                        resultDiv.textContent = res;
                     }, 500);
                 });
                 
@@ -1026,9 +1068,11 @@
                         await navigator.clipboard.writeText(text);
                         icon.classList.replace('fa-copy', 'fa-check');
                         icon.classList.replace('fa-regular', 'fa-solid');
+                        copyBtn.classList.add('text-green-500', 'bg-green-50');
                         setTimeout(() => {
                             icon.classList.replace('fa-check', 'fa-copy');
                             icon.classList.replace('fa-solid', 'fa-regular');
+                            copyBtn.classList.remove('text-green-500', 'bg-green-50');
                         }, 1500);
                     } catch (err) {
                         icon.classList.replace('fa-copy', 'fa-xmark');
@@ -1106,8 +1150,17 @@
 					const targetName = getLanguageDisplayName(target);
 					card.dataset.sourceName = sourceName;
 					card.dataset.targetName = targetName;
-					const titleText = card.querySelector('.card-title .text-sm');
-					if (titleText) titleText.innerHTML = `${sourceName} <span class="text-zinc-400 mx-1">→</span> ${targetName}`;
+					
+                    // Update header HTML structure
+                    const titleDiv = card.querySelector('.card-title .text-sm');
+                    if (titleDiv) {
+                        titleDiv.innerHTML = `
+                            <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs uppercase tracking-wide">${sourceName}</span>
+                            <i class="fa-solid fa-arrow-right text-slate-300 text-xs"></i>
+                            <span class="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded text-xs uppercase tracking-wide">${targetName}</span>
+                        `;
+                    }
+                    
 					const textarea = card.querySelector('textarea.input-box');
 					if (textarea) textarea.placeholder = t('inputPlaceholder', { sourceName });
 					const speakBtns = card.querySelectorAll('.speak-source-btn, .speak-target-btn');
