@@ -393,6 +393,9 @@
 					deeplKeyPlaceholder: '请输入 DeepL API Key',
 					deeplKeyStatusHas: '🟢 当前状态：已设置 API Key',
 					deeplKeyStatusNone: '⚪ 当前状态：未设置 API Key',
+					deeplKeyStatusTesting: '🟡 正在测试 API Key…',
+					deeplKeyStatusValid: '🟢 API Key 验证通过',
+					deeplKeyStatusInvalid: '🔴 API Key 无效或已停用',
 					deeplKeyCleared: '已清除 DeepL API Key',
 					deeplKeyUpdated: 'DeepL API Key 已更新（覆盖）',
 					deeplKeySaved: 'DeepL API Key 已保存到本地浏览器（仅此设备）',
@@ -406,6 +409,11 @@
 					translating: '翻译中…',
 					translateFailed: '翻译失败，请稍后重试',
 					ttsUnsupported: '当前浏览器不支持朗读功能',
+					deeplInvalidKey: 'DeepL API Key 无效或已停用，请检查或替换',
+					deeplQuotaExceeded: 'DeepL API Key 已达额度上限（配额用尽）',
+					deeplMissingKey: '未提供 DeepL API Key，请在右上角导入',
+					deeplNetworkError: '连接 DeepL 服务失败，请稍后再试',
+					deeplBackendBadGateway: 'DeepL 服务返回错误（502），可能是 API Key 问题',
 					sameLangError: '源语言和目标语言不能相同',
 					duplicateCardError: '已存在相同的翻译卡片（相同源语言与目标语言）',
 					footerMadeBy_html: '由 <a href="https://github.com/Ahhhh2016" class="text-slate-500 hover:text-slate-800 hover:underline font-medium transition-colors">Ahhhh2016</a> 制作， 希望这个小工具对你有帮助',
@@ -437,8 +445,11 @@
 					planFree: 'Free (api-free.deepl.com)',
 					planPro: 'Pro (api.deepl.com)',
 					deeplKeyPlaceholder: 'Enter DeepL API Key',
-					deeplKeyStatusHas: '✅ Status: API Key set',
+					deeplKeyStatusHas: '🟢 Status: API Key set',
 					deeplKeyStatusNone: '⚪ Status: No API Key',
+					deeplKeyStatusTesting: '🟡 Testing API Key…',
+					deeplKeyStatusValid: '🟢 API Key validated',
+					deeplKeyStatusInvalid: '🔴 API Key invalid or deactivated',
 					deeplKeyCleared: 'DeepL API Key cleared',
 					deeplKeyUpdated: 'DeepL API Key updated (overwritten)',
 					deeplKeySaved: 'DeepL API Key saved in this browser (this device only)',
@@ -452,6 +463,11 @@
 					translating: 'Translating…',
 					translateFailed: 'Translation failed, please try again later',
 					ttsUnsupported: 'Text-to-speech is not supported in this browser',
+					deeplInvalidKey: 'DeepL API Key is invalid or deactivated',
+					deeplQuotaExceeded: 'DeepL API quota exceeded',
+					deeplMissingKey: 'No DeepL API Key provided. Please import it.',
+					deeplNetworkError: 'Failed to reach DeepL service. Please try again later.',
+					deeplBackendBadGateway: 'DeepL returned an error (502), possibly an API Key issue',
 					sameLangError: 'Source and target languages cannot be the same',
 					duplicateCardError: 'A translation card with the same source and target already exists',
 					footerMadeBy_html: 'Made by <a href="https://github.com/Ahhhh2016" class="text-slate-500 hover:text-slate-800 hover:underline font-medium transition-colors">Ahhhh2016</a>, hope this little tool can help you',
@@ -572,6 +588,17 @@
             const BACKEND_URL = (localStorage.getItem('backend_url') || window.location.origin).replace(/\/+$/, '');
             let backendReachable = false;
             let backendHasServerKey = false;
+            // 提示节流：DeepL Key 问题仅在短时间内提示一次，避免频繁打扰
+            let deeplLastKeyErrorAt = 0;
+            function notifyDeeplKeyIssue(message) {
+                try {
+                    const now = Date.now();
+                    if (now - deeplLastKeyErrorAt > 60000) { // 60s 最多提示一次
+                        alert(String(message || t('deeplInvalidKey')));
+                        deeplLastKeyErrorAt = now;
+                    }
+                } catch (_) {}
+            }
             (async function initBackendHealth() {
                 try {
                     const r = await fetch(BACKEND_URL + '/api/health', { mode: 'cors' });
@@ -602,6 +629,10 @@
 				if (deeplKeyStatus) {
 					const hasKey = !!getDeepLKey();
 					deeplKeyStatus.textContent = hasKey ? t('deeplKeyStatusHas') : t('deeplKeyStatusNone');
+					// 如果已有 Key，自动做一次快速验证
+					if (hasKey) {
+						testDeepLKey(getDeepLKey());
+					}
 				}
                 if (deeplDeleteBtn) {
                     const hasKey = !!getDeepLKey();
@@ -613,6 +644,55 @@
             }
             function hideDeeplModal() { deeplModal.classList.add('hidden'); }
 			applyDeeplTipsLang();
+			// 测试 DeepL Key 的辅助函数：调用后端 /api/translate 进行一次轻量翻译
+			async function testDeepLKey(key) {
+				try {
+					if (!deeplKeyStatus) return;
+					deeplKeyStatus.textContent = t('deeplKeyStatusTesting');
+					const resp = await fetch(BACKEND_URL + '/api/translate', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						mode: 'cors',
+						body: JSON.stringify({
+							text: 'hello',
+							sourceLang: 'en',
+							targetLang: 'de',
+							apiKey: key || getDeepLKey() || ''
+						})
+					});
+					if (!resp.ok) {
+						let msg = '';
+						try {
+							const j = await resp.json();
+							msg = String(j && (j.error || j.message) || '');
+						} catch (_) {
+							try { msg = await resp.text(); } catch (_) {}
+						}
+						const lower = (msg || '').toLowerCase();
+						// 401/403/456/502 均视为 key 有问题（或网络/配额问题），统一标红，但用户仍可查看详细错误日志
+						if (resp.status === 401 || resp.status === 403 || lower.includes('401') || lower.includes('403')) {
+							deeplKeyStatus.textContent = t('deeplKeyStatusInvalid');
+						} else if (resp.status === 456 || lower.includes('456') || lower.includes('quota')) {
+							deeplKeyStatus.textContent = t('deeplQuotaExceeded');
+						} else if (resp.status === 502) {
+							deeplKeyStatus.textContent = t('deeplBackendBadGateway');
+						} else {
+							deeplKeyStatus.textContent = t('deeplNetworkError');
+						}
+						return false;
+					}
+					const j = await resp.json().catch(() => null);
+					if (j && j.ok === true) {
+						deeplKeyStatus.textContent = t('deeplKeyStatusValid');
+						return true;
+					}
+					deeplKeyStatus.textContent = t('deeplKeyStatusInvalid');
+					return false;
+				} catch (_) {
+					if (deeplKeyStatus) deeplKeyStatus.textContent = t('deeplNetworkError');
+					return false;
+				}
+			}
             
             if (importDeeplBtn) importDeeplBtn.addEventListener('click', showDeeplModal);
             if (deeplCancelBtn) deeplCancelBtn.addEventListener('click', hideDeeplModal);
@@ -628,7 +708,17 @@
                     else if (prev) msg = t('deeplKeyUpdated');
                     else msg = t('deeplKeySaved');
                     alert(msg);
-                    hideDeeplModal();
+					// 保存后立即测试，并在状态栏显示结果；保持弹窗打开以便用户查看
+					if (key) {
+						testDeepLKey(key).then(() => {
+							updateFooterApiStatus();
+							applyI18nToStatic();
+						});
+					} else {
+						if (deeplKeyStatus) deeplKeyStatus.textContent = t('deeplKeyStatusNone');
+						updateFooterApiStatus();
+						applyI18nToStatic();
+					}
 					updateFooterApiStatus();
 					applyI18nToStatic();
                 });
@@ -754,7 +844,30 @@
                     body: JSON.stringify(body),
                     mode: 'cors'
                 });
-                if (!resp.ok) throw new Error('backend error ' + resp.status);
+                if (!resp.ok) {
+                    let backendMsg = '';
+                    try {
+                        const j = await resp.json();
+                        backendMsg = String(j && (j.error || j.message) || '');
+                    } catch (_) {
+                        try { backendMsg = await resp.text(); } catch (_) {}
+                    }
+                    const lower = (backendMsg || '').toLowerCase();
+                    let userMsg = t('translateFailed');
+                    if (resp.status === 400 && lower.includes('missing deepl apikey')) {
+                        userMsg = t('deeplMissingKey');
+                    } else if (resp.status === 401 || resp.status === 403 || lower.includes('403')) {
+                        userMsg = t('deeplInvalidKey');
+                    } else if (lower.includes('456') || lower.includes('quota')) {
+                        userMsg = t('deeplQuotaExceeded');
+                    } else if (resp.status === 502) {
+                        userMsg = t('deeplBackendBadGateway');
+                    }
+                    const err = new Error(`backend error ${resp.status}: ${backendMsg}`);
+                    // 附带面向用户的提示信息，供上层捕获后展示
+                    err.userFacingMessage = userMsg;
+                    throw err;
+                }
                 const data = await resp.json();
                 if (!data || data.ok !== true) throw new Error('backend response invalid');
 				updateFooterApiStatus('deepl');
@@ -766,7 +879,15 @@
                     if (getDeepLKey() || backendHasServerKey) {
                         return await translateViaBackend(text, sourceLang, targetLang);
                     }
-                } catch (e) {}
+                } catch (e) {
+                    try {
+                        if (e && e.userFacingMessage) notifyDeeplKeyIssue(e.userFacingMessage);
+                    } catch (_) {}
+                }
+                // 没有提供 DeepL Key 或后端未配置时，直接回退到 LibreTranslate，并提示一次
+                if (!(getDeepLKey() || backendHasServerKey)) {
+                    notifyDeeplKeyIssue(t('deeplMissingKey'));
+                }
                 try {
                     const endpoints = ['https://translate.terraprint.co/translate', 'https://translate.fedilab.app/translate'];
                     let resp, usedLT = '';
